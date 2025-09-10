@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 5: Collections and Hardware</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .nav-link.active { color: #3b82f6; border-bottom-width: 2px; border-color: #3b82f6; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .analogy-box { background-color: #f0f9ff; border: 2px dashed #7dd3fc; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .analogy-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #0c4a6e; }
+        .deep-dive { background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #312e81; }
+        .calendar-reminder { background-color: white; border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1.5rem; margin: 2rem 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .calendar-title { font-size: 1.25rem; font-weight: bold; color: #111827; }
+        .calendar-time { font-weight: 600; color: #1d4ed8; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center"><span class="font-bold text-xl text-gray-700">Rust Masterclass: Chapter 5</span></div>
+            <div class="hidden md:block"><nav id="desktop-nav" class="ml-10 flex items-baseline space-x-4">
+                <a href="#intro" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Intro</a>
+                <a href="#vec" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Vectors</a>
+                <a href="#hashmap" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">HashMaps</a>
+                <a href="#generics" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Generics</a>
+                <a href="#project" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Project</a>
+                <a href="#end" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Week 1 End</a>
+            </nav></div>
+            <div class="-mr-2 flex md:hidden"><button id="mobile-menu-button" class="bg-gray-100 p-2 rounded-md text-gray-500"><svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button></div>
+        </div></div>
+        <div class="md:hidden hidden" id="mobile-menu"><div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+             <a href="#intro" class="nav-link-mobile block p-2 rounded-md">Intro</a><a href="#vec" class="nav-link-mobile block p-2 rounded-md">Vectors</a><a href="#hashmap" class="nav-link-mobile block p-2 rounded-md">HashMaps</a><a href="#generics" class="nav-link-mobile block p-2 rounded-md">Generics</a><a href="#project" class="nav-link-mobile block p-2 rounded-md">Project</a><a href="#end" class="nav-link-mobile block p-2 rounded-md">Week 1 End</a>
+        </div></div>
+    </header>
+
+    <main class="pt-24"><div class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 5: Collections and Generics</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">Managing the Fleet</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">We've designed the blueprint for a single network interface. But a router is a collection of interfaces, a data center is a collection of servers, and an aircraft is a collection of sensors. This chapter is about managing those collections. We'll explore Rust's most common "LEGO boxes" for holding lists of items, and we'll conclude your first week by bringing our code to life on a real piece of hardware.</p>
+        </header>
+
+        <article class="space-y-20">
+            <section id="vec" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">1. Vectors: Your Growable List</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>The most common collection you will ever use is the <strong>vector</strong>, typed as `Vec<T>` (pronounced "vector of T"). A vector is a growable list of values of the same type. It's the Rust equivalent of Python's `list`.</p>
+                    <div class="analogy-box">
+                        <h3 class="analogy-title">Analogy: The Dynamic Rack Row</h3>
+                        <p class="mt-2">Think of an array (`[u8; 6]`) as a single, fixed-size server rack. You know exactly how many units it holds. A `Vec<T>` is like an entire row in your data center. You can start with one rack, but as you need more capacity, you can add more racks to the end of the row. It's a list that can grow.</p>
+                    </div>
+                    <p>Because a vector's size can change, its data is always stored on the <strong>Heap</strong>. The `Vec` struct itself, which lives on the Stack, holds a pointer to the heap data, its length, and its capacity, just like a `String`.</p>
+                    <div class="code-block"><pre><code class="language-rust">// We bring our blueprints from Chapter 4.
+enum IpAddress { V4(u8, u8, u8, u8) }
+struct Interface { name: String, ip: IpAddress }
+
+fn main() {
+    // Create an empty vector that will hold `Interface` structs.
+    let mut interfaces: Vec<Interface> = Vec::new();
+    println!("Initial interface count: {}", interfaces.len());
+
+    // Create some interfaces
+    let eth0 = Interface { 
+        name: String::from("eth0"), 
+        ip: IpAddress::V4(192, 168, 1, 1),
+    };
+    let eth1 = Interface { 
+        name: String::from("eth1"), 
+        ip: IpAddress::V4(10, 10, 20, 1),
+    };
+    
+    // Add our interfaces to the vector.
+    interfaces.push(eth0);
+    interfaces.push(eth1);
+
+    println!("New interface count: {}", interfaces.len());
+
+    // We can iterate over a vector just like any other collection.
+    println!("\n--- Router Interface Report ---");
+    for interface in &interfaces { // We borrow the vector to iterate
+        let IpAddress::V4(o1,o2,o3,o4) = interface.ip; // A simple pattern match
+        println!("- {}: {}.{}.{}.{}", interface.name, o1,o2,o3,o4);
+    }
+}</code></pre></div>
+                </div>
+            </section>
+
+            <section id="hashmap" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">2. HashMaps: Your Key-Value Store</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Sometimes you don't want a simple list; you want to look up a value by a specific key. For this, we use a <strong>hash map</strong>, typed `HashMap<K, V>`. It stores a mapping of keys of type `K` to values of type `V`. It is the Rust equivalent of Python's `dict`.</p>
+                     <div class="analogy-box">
+                        <h3 class="analogy-title">Analogy: The DNS Cache</h3>
+                        <p class="mt-2">A DNS server doesn't store records in a list that you have to search through one by one. That would be incredibly slow. It stores them in a way that you can instantly look up an IP address (the value) by its hostname (the key). A `HashMap` does the same thing.</p>
+                    </div>
+                    <p>Let's use a hash map to store the status of routing protocols on our device.</p>
+                     <div class="code-block"><pre><code class="language-rust">use std::collections::HashMap;
+
+fn main() {
+    // Create an empty hash map. The key is the protocol name, the value is its status.
+    let mut routing_protocols = HashMap::new();
+
+    // Add some protocols. `insert` takes ownership of the key and value.
+    routing_protocols.insert(String::from("BGP"), true);
+    routing_protocols.insert(String::from("OSPF"), true);
+    routing_protocols.insert(String::from("EIGRP"), false); // This one is disabled
+
+    // We can look up a value by its key. The `get` method returns an `Option`.
+    let bgp_status = routing_protocols.get("BGP");
+    
+    match bgp_status {
+        Some(is_active) => println!("BGP status: {}", if *is_active { "Active" } else { "Inactive" }),
+        None => println!("BGP status is unknown."),
+    }
+    
+    // We can also iterate over key-value pairs.
+    for (protocol, is_active) in &routing_protocols {
+        println!("Protocol {} -> Active: {}", protocol, is_active);
+    }
+}</code></pre></div>
+                </div>
+            </section>
+
+            <section id="generics" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">3. Generics: The `<T>` in `Vec<T>`</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>You've seen this `<T>` syntax a few times now. This is one of Rust's most powerful features: <strong>generics</strong>. Generics are a way of writing code that can operate on multiple different data types without sacrificing performance or safety.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Why Do We Need Generics?</h3>
+                        <p class="mt-2">Imagine you needed a list of integers. You would need a `Vec_i32`. What if you needed a list of strings? You would need a different `Vec_String`. This would be a nightmare. We want to write the logic for a "list" only once, and have it work for any type.</p>
+                        <p class="mt-2">The `<T>` is a placeholder for "any type." When you write `let my_list: Vec<i32> = Vec::new();`, you are telling the Rust compiler: "Take the generic blueprint for `Vec<T>` and create a specialized version of it where `T` is `i32`."</p>
+                        <p class="mt-2">This process, called "monomorphization," happens at compile time. The compiler generates highly optimized code for each specific type you use. This means a `Vec<i32>` is just as fast as a hand-written list for integers. You get the flexibility of Python's lists with the performance of C. It is the ultimate "have your cake and eat it too" feature.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="project" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">4. Week 1 Capstone Project: Micro:bit Device Status Indicator</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>It is time to leave the world of pure simulation and touch the real world. For this project, we will take the `InterfaceStatus` enum we designed in Chapter 4 and bring it to life on your BBC Micro:bit. We will create a simple status monitor where you can press the A and B buttons to cycle through the different statuses, and the 5x5 LED display will show a unique icon for each one.</p>
+                    <p>This project combines everything from your first week:
+                        <ul>
+                            <li><strong>Chapter 2:</strong> Basic control flow (`loop`, `match`).</li>
+                            <li><strong>Chapter 3:</strong> Ownership and borrowing (passing references to functions).</li>
+                            <li><strong>Chapter 4:</strong> Our custom `enum` blueprint (`InterfaceStatus`).</li>
+                            <li><strong>Chapter 5:</strong> Using a `Vec` to store our list of statuses.</li>
+                        </ul>
+                    </p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Hardware and Setup</h3>
+                        <p class="mt-2">First, you'll need to set up your computer for embedded Rust development. The best guide for this is the official <a href="https://docs.rust-embedded.org/discovery/f3-discovery/index.html" target="_blank" class="text-blue-600 hover:underline">Embedded Rust Discovery Book</a>. You'll need to install an extra component with `rustup target add thumbv7em-none-eabihf`.</p>
+                        <p class="mt-2">Create a new project with `cargo new microbit_status`. You will need to add a dependency on the `microbit` crate by adding `microbit = "0.13.0"` to your `Cargo.toml`. You'll also need a `.cargo/config.toml` file to tell Cargo how to run the code on your device.</p>
+                    </div>
+                     <h4>The Full Code: `src/main.rs`</h4>
+                     <div class="code-block"><pre><code class="language-rust">#![no_std]
+#![no_main]
+
+// We use the `microbit` crate to safely interact with the hardware.
+use microbit::{
+    board::Board,
+    display::blocking::Display,
+    hal::{prelude::*, Rtc, time::Hertz},
+};
+use panic_halt as _; // A panic handler for embedded devices.
+
+// Our enum blueprint from Chapter 4!
+#[derive(Clone, Copy)] // Allows the enum to be copied
+enum InterfaceStatus {
+    Up,
+    Down,
+    AdminDown,
+}
+
+#[cortex_m_rt::entry]
+fn main() -> ! {
+    let board = Board::take().unwrap();
+    let mut timer = board.TIMER0.constrain();
+    let mut display = Display::new(board.display_pins);
+
+    // Using an array here, but a Vec would also work! A list of all possible statuses.
+    let statuses = [
+        InterfaceStatus::Up,
+        InterfaceStatus::Down,
+        InterfaceStatus::AdminDown,
+    ];
+    let mut current_status_index = 0;
+
+    // These are the icons for our 5x5 LED display.
+    let up_icon = [[1, 1, 1, 1, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [1, 1, 1, 1, 1]];
+    let down_icon = [[1, 0, 0, 0, 1], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [0, 1, 0, 1, 0], [1, 0, 0, 0, 1]];
+    let admin_down_icon = [[0, 0, 0, 0, 0], [0, 1, 1, 1, 0], [0, 1, 0, 1, 0], [0, 1, 1, 1, 0], [0, 0, 0, 0, 0]];
+
+    // The main program loop
+    loop {
+        // Show the icon for the current status.
+        let current_status = statuses[current_status_index];
+        match current_status {
+            InterfaceStatus::Up => display.show(&mut timer, up_icon, 300),
+            InterfaceStatus::Down => display.show(&mut timer, down_icon, 300),
+            InterfaceStatus::AdminDown => display.show(&mut timer, admin_down_icon, 300),
+        }
+
+        // Check if button A is pushed to go to the next status.
+        if board.buttons.button_a.is_pushed() {
+            current_status_index = (current_status_index + 1) % statuses.len();
+        }
+        
+        // Check if button B is pushed to go to the previous status.
+        if board.buttons.button_b.is_pushed() {
+            if current_status_index == 0 {
+                current_status_index = statuses.len() - 1;
+            } else {
+                current_status_index -= 1;
+            }
+        }
+    }
+}
+</code></pre></div>
+                </div>
+            </section>
+            
+            <section id="end" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">5. End of Week 1: Your First Embedded System</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Pause for a moment and look at what you have accomplished. One week ago, you were a Python developer looking to get into a new field. Today, you have:
+                        <ul>
+                            <li>Mastered the philosophy and tooling of a modern systems language.</li>
+                            <li>Built a deep, physical intuition for how memory works on the Stack and the Heap.</li>
+                            <li>Conquered Ownership and Borrowing, the core concepts that make Rust safe and fast.</li>
+                            <li>Learned to create your own data blueprints with Structs and Enums.</li>
+                            <li>Managed collections of data with Vectors.</li>
+                            <li><strong>And you have written a program that runs not on a server, but on a real, physical piece of hardware in your hands.</strong></li>
+                        </ul>
+                    This is a monumental achievement. You have laid an incredible foundation.</p>
+                </div>
+                <div class="calendar-reminder">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            <svg class="h-12 w-12 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM4.5 6.75A1.25 1.25 0 015.75 5.5h8.5a1.25 1.25 0 011.25 1.25v8.5A1.25 1.25 0 0114.25 16.5h-8.5A1.25 1.25 0 014.5 15.25v-8.5z" clip-rule="evenodd" /></svg>
+                        </div>
+                        <div>
+                            <p class="calendar-title">Reminder: Continue Rust Masterclass</p>
+                            <p class="text-gray-600">Next week, we pick up with Chapter 6.</p>
+                            <p class="calendar-time mt-1">🗓️ Next Wednesday, September 17, 2025</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="prose max-w-none text-gray-700 space-y-4 mt-8">
+                    <p><strong>Preamble to Week 2:</strong> So far, our code has assumed everything works perfectly. But in the real world of networking and hardware, failures are common. A file might not exist. A network packet might be corrupted. A sensor might fail to respond. How do we write code that can gracefully handle these errors instead of just crashing? That is the central theme of our second week, as we dive into <strong>Chapter 6: Error Handling and the Elegance of `Result` and `Option`</strong>.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+            document.querySelectorAll('.nav-link-mobile').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.add('hidden'); }); });
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { rootMargin: "-20% 0px -80% 0px" });
+            sections.forEach(section => { observer.observe(section); });
+        });
+    </script>
+</body>
+</html>

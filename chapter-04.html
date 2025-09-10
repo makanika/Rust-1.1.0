@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 4: Blueprints for Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .nav-link.active { color: #3b82f6; border-bottom-width: 2px; border-color: #3b82f6; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .exercise { background-color: #fefce8; border-left: 4px solid #facc15; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive { background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #312e81; }
+        details { background-color: #f3f4f6; border-radius: 0.5rem; padding: 1rem; }
+        summary { font-weight: 600; cursor: pointer; color: #1f2937; }
+        .memory-diagram { background-color: #1f2937; color: #f9fafb; font-family: 'Source Code Pro', monospace; padding: 1rem; border-radius: 0.5rem; }
+        .mem-address { color: #9ca3af; }
+        .mem-value { color: #a7f3d0; }
+        .mem-ptr { color: #fca5a5; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center"><span class="font-bold text-xl text-gray-700">Rust Masterclass: Chapter 4</span></div>
+            <div class="hidden md:block"><nav id="desktop-nav" class="ml-10 flex items-baseline space-x-4">
+                <a href="#intro" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Intro</a>
+                <a href="#structs" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Structs</a>
+                <a href="#methods" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Methods</a>
+                <a href="#enums" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Enums</a>
+                <a href="#match" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Match</a>
+                <a href="#project" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Project</a>
+                <a href="#next" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Next Chapter</a>
+            </nav></div>
+            <div class="-mr-2 flex md:hidden"><button id="mobile-menu-button" class="bg-gray-100 p-2 rounded-md text-gray-500"><svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button></div>
+        </div></div>
+        <div class="md:hidden hidden" id="mobile-menu"><div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+             <a href="#intro" class="nav-link-mobile block p-2 rounded-md">Intro</a><a href="#structs" class="nav-link-mobile block p-2 rounded-md">Structs</a><a href="#methods" class="nav-link-mobile block p-2 rounded-md">Methods</a><a href="#enums" class="nav-link-mobile block p-2 rounded-md">Enums</a><a href="#match" class="nav-link-mobile block p-2 rounded-md">Match</a><a href="#project" class="nav-link-mobile block p-2 rounded-md">Project</a><a href="#next" class="nav-link-mobile block p-2 rounded-md">Next Chapter</a>
+        </div></div>
+    </header>
+
+    <main class="pt-24"><div class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 4: Blueprints for Data</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">Structs and Enums</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">We have mastered how data is owned and passed around. Now, we learn to design the data itself. This chapter introduces Rust's two primary tools for creating custom data types: `struct` for grouping related data, and `enum` for representing a choice among possibilities. We will use them to build a detailed, realistic model of our network router configuration.</p>
+        </header>
+
+        <article class="space-y-20">
+            <section id="structs" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Structuring Your Data with `struct`</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>A `struct`, short for structure, is a custom data type that lets you name and package together related values. It's like a blueprint for a concept. In Python, you might use a dictionary or a simple class for this. In Rust, a `struct` is the clear, type-safe way to do it.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Case Study: Modeling a Network Interface</h3>
+                        <p class="mt-2">An interface on a router isn't just one value; it's a collection of properties. We can model this with a struct.</p>
+                    </div>
+                    <div class="code-block"><pre><code class="language-rust">
+struct NetworkInterface {
+    name: String,
+    ip_address: String,
+    is_enabled: bool,
+    mtu: u16,
+}
+
+fn main() {
+    // We create an "instance" of the struct
+    let gig_ethernet_0_1 = NetworkInterface {
+        name: String::from("GigabitEthernet0/1"),
+        ip_address: String::from("192.168.1.1"),
+        is_enabled: true,
+        mtu: 1500,
+    };
+
+    // We can access the fields using dot notation
+    println!("Interface {} is up with IP {}", 
+        gig_ethernet_0_1.name, 
+        gig_ethernet_0_1.ip_address
+    );
+}</code></pre></div>
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">Structs and Ownership</h3>
+                    <p>The rules of ownership apply to structs as a whole. Our `NetworkInterface` struct contains `String` fields, which own data on the Heap. This means that when we assign an instance of `NetworkInterface` to another variable, the entire struct is <strong>moved</strong>, just like a `String` was in the previous chapter.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Structs in Memory</h3>
+                        <p class="mt-2">A struct's fields are stored contiguously in memory, in the order you declare them. Let's visualize our `gig_ethernet_0_1` variable on the stack:</p>
+                        <div class="memory-diagram">
+                           <pre class="col-span-2"><span class="mem-address">// On the Stack for `main` function:</span>
+<span class="mem-address">name: gig_ethernet_0_1</span>
+  <span class="mem-address">.name (ptr):</span> <span class="mem-ptr">0xABC1</span>
+  <span class="mem-address">.name (len):</span> <span class="mem-value">18</span>
+  <span class="mem-address">.name (cap):</span> <span class="mem-value">18</span>
+  <span class="mem-address">.ip_address (ptr):</span> <span class="mem-ptr">0xDEF2</span>
+  <span class="mem-address">.ip_address (len):</span> <span class="mem-value">11</span>
+  <span class="mem-address">.ip_address (cap):</span> <span class="mem-value">11</span>
+  <span class="mem-address">.is_enabled:</span> <span class="mem-value">true</span>
+  <span class="mem-address">.mtu:</span> <span class="mem-value">1500</span>
+
+<span class="mem-address">// On the Heap:</span>
+<span class="mem-address">addr: 0xABC1</span> <span class="mem-value">"GigabitEthernet0/1"</span>
+<span class="mem-address">addr: 0xDEF2</span> <span class="mem-value">"192.168.1.1"</span>
+                           </pre>
+                        </div>
+                        <p class="mt-2">The stack part of the struct contains the pointers to the heap data, alongside the fixed-size values like the boolean and the `u16`.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="methods" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Giving Structs Behavior with `impl`</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Data is more useful when it has associated behavior. In Rust, we define methods for a struct in an `impl` block (short for "implementation").</p>
+                    <div class="code-block"><pre><code class="language-rust">// (struct definition from before)
+struct NetworkInterface {
+    name: String,
+    ip_address: String,
+    is_enabled: bool,
+    mtu: u16,
+}
+
+impl NetworkInterface {
+    // This is a "method". Its first parameter is always `self`.
+    // `&self` is an immutable borrow of the struct instance.
+    fn get_summary(&self) -> String {
+        format!("{}: {} (status: {})", 
+            self.name, 
+            self.ip_address, 
+            if self.is_enabled { "up" } else { "down" }
+        )
+    }
+    
+    // `&mut self` is a mutable borrow, allowing us to change the instance.
+    fn disable(&mut self) {
+        self.is_enabled = false;
+        println!("Interface {} has been disabled.", self.name);
+    }
+}
+
+fn main() {
+    let mut interface1 = NetworkInterface {
+        name: String::from("vlan100"),
+        ip_address: String::from("10.10.100.1"),
+        is_enabled: true,
+        mtu: 1500,
+    };
+    
+    println!("{}", interface1.get_summary());
+    interface1.disable();
+    println!("{}", interface1.get_summary());
+}</code></pre></div>
+                    <p>The use of `&self` and `&mut self` is not arbitrary. It's a direct application of the borrowing rules we learned in Chapter 3. The compiler enforces them here just as it did with standalone functions.</p>
+                </div>
+            </section>
+
+            <section id="enums" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Enums: A Value Can Be One of a Few Things</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Sometimes, a value can only be one of a small, finite set of possibilities. For this, we use an `enum`, short for "enumeration". This is far safer than using magic strings or numbers.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Case Study: Modeling Interface Status and IP Protocols</h3>
+                        <p class="mt-2">An interface's status can only be in a few states. An IP packet is either TCP or UDP. An IP address is either v4 or v6. Enums are perfect for this.</p>
+                    </div>
+                    <div class="code-block"><pre><code class="language-rust">
+enum InterfaceStatus {
+    Up,
+    Down,
+    AdminDown,
+}
+
+enum IpProtocol {
+    Tcp,
+    Udp,
+}
+
+// Enums can also hold data. This is a very powerful feature.
+enum IpAddress {
+    V4(u8, u8, u8, u8),
+    V6(String),
+}
+
+fn main() {
+    let status = InterfaceStatus::Up;
+    let protocol = IpProtocol::Tcp;
+    let home_ip = IpAddress::V4(127, 0, 0, 1);
+    let loopback_ip = IpAddress::V6(String::from("::1"));
+}</code></pre></div>
+                    <p>By using enums, we make our program's domain explicit. A function that expects an `InterfaceStatus` cannot accidentally be passed a `u8` with the value `5`. The compiler guarantees it.</p>
+                </div>
+            </section>
+            
+            <section id="match" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">The `match` Operator: Rust's Switch Statement</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>So how do we use a value that's an enum? The primary tool is the `match` control flow operator. It allows you to compare a value against a series of patterns and then execute code based on which pattern matches.</p>
+                    <p>The most important feature of `match` is that it is <strong>exhaustive</strong>. You must provide a branch for every possible variant of the enum. The compiler will stop you if you forget one, eliminating a huge source of bugs.</p>
+                    <div class="code-block"><pre><code class="language-rust">
+// (Assuming the IpAddress enum from before)
+fn route_packet(ip: IpAddress) {
+    match ip {
+        IpAddress::V4(octet1, octet2, octet3, octet4) => {
+            println!("Routing IPv4 packet to {}.{}.{}.{}", 
+                octet1, octet2, octet3, octet4);
+        }
+        IpAddress::V6(address) => {
+            println!("Routing IPv6 packet to {}", address);
+        }
+    }
+}</code></pre></div>
+                    <p>In the `V4` branch, `match` also de-structures the enum, binding the inner values to new variables we can use. If we had forgotten the `V6` branch, this code would not compile.</p>
+                </div>
+            </section>
+            
+            <section id="project" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter Project: An Advanced Router Model</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Let's combine everything we've learned to build a sophisticated model of a router and its interfaces. This project will use structs, enums, methods, and the `match` operator to create a robust and expressive piece of code.</p>
+                    <div class="exercise">
+                        <h4 class="font-bold text-lg text-yellow-900">Your Task: Build the Router Model</h4>
+                        <ol class="list-decimal list-inside mt-3 space-y-2 text-yellow-800">
+                            <li>Create a new binary crate: `cargo new router_model`.</li>
+                            <li>Replace the code in `src/main.rs` with the complete code below.</li>
+                            <li>Read every comment to understand how the pieces fit together.</li>
+                            <li>Run the project with `cargo run` and analyze the output.</li>
+                        </ol>
+                        <h4>Final Code: `src/main.rs`</h4>
+                        <div class="code-block"><pre><code class="language-rust">
+#[derive(Debug)]
+enum InterfaceStatus {
+    Up,
+    Down,
+    AdminDown,
+}
+
+#[derive(Debug)]
+enum IpAddress {
+    V4(u8, u8, u8, u8),
+    V6(String),
+}
+
+// Our blueprint for a single network interface
+#[derive(Debug)]
+struct Interface {
+    name: String,
+    status: InterfaceStatus,
+    ip: Option&lt;IpAddress&gt;, // An interface might not have an IP!
+}
+
+impl Interface {
+    fn print_status(&self) {
+        // We use `match` to handle the different status variants
+        let status_str = match self.status {
+            InterfaceStatus::Up => "Up",
+            InterfaceStatus::Down => "Down",
+            InterfaceStatus::AdminDown => "Administratively Down",
+        };
+
+        // We use `match` again to handle the Option for the IP address
+        let ip_str = match &self.ip {
+            Some(IpAddress::V4(o1, o2, o3, o4)) => format!("{}.{}.{}.{}", o1, o2, o3, o4),
+            Some(IpAddress::V6(addr)) => addr.clone(),
+            None => String::from("Unassigned"),
+        };
+        
+        println!(
+            "  Interface: {}, Status: {}, IP: {}",
+            self.name, status_str, ip_str
+        );
+    }
+}
+
+fn main() {
+    let gig0_1 = Interface {
+        name: String::from("GigabitEthernet0/1"),
+        status: InterfaceStatus::Up,
+        ip: Some(IpAddress::V4(192, 168, 1, 1)),
+    };
+    
+    let gig0_2 = Interface {
+        name: String::from("GigabitEthernet0/2"),
+        status: InterfaceStatus::AdminDown,
+        ip: None, // This interface has no IP address assigned
+    };
+
+    println!("Router Status Report:");
+    gig0_1.print_status();
+    gig0_2.print_status();
+}</code></pre></div>
+                    <p>Notice the `Option<IpAddress>`. This is an enum from the standard library (`Some` or `None`) that lets us safely represent an interface that may or may not have an IP address. The compiler forces us to handle the `None` case, preventing null pointer errors.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="next" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">Final Thoughts and a Preamble to Chapter 5</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>You have just taken a massive step forward. You are no longer limited to the basic types provided by the language. You can now create your own rich, expressive, and type-safe blueprints that precisely model the domain you are working in. You've seen how `struct` and `enum` are not just conveniences, but powerful tools for correctness that the compiler helps you enforce.</p>
+                    <p>However, our router model is still simplistic. A real router doesn't have just two interfaces; it has a list of them. An access control list isn't a single rule; it's a collection of rules. How do we manage these lists of data?</p>
+                    <p><strong>In Chapter 5, "Collections and Generics,"</strong> we will explore Rust's standard library collections. We'll do a deep dive into the `Vec<T>` (a growable list, like Python's `list`), the `HashMap<K, V>` (like Python's `dict`), and see how Rust uses generics to create data structures that can hold any type of data in a safe and efficient way.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+            document.querySelectorAll('.nav-link-mobile').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.add('hidden'); }); });
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { rootMargin: "-20% 0px -80% 0px" });
+            sections.forEach(section => { observer.observe(section); });
+        });
+    </script>
+</body>
+</html>
+

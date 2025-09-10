@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 3.1: The Core Mechanic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .nav-link.active { color: #3b82f6; border-bottom-width: 2px; border-color: #3b82f6; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .exercise { background-color: #fefce8; border-left: 4px solid #facc15; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive { background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #312e81; }
+        details { background-color: #f3f4f6; border-radius: 0.5rem; padding: 1rem; }
+        summary { font-weight: 600; cursor: pointer; color: #1f2937; }
+        .memory-diagram { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background-color: #1f2937; color: #f9fafb; font-family: 'Source Code Pro', monospace; padding: 1rem; border-radius: 0.5rem; }
+        .mem-address { color: #9ca3af; }
+        .mem-value { color: #a7f3d0; }
+        .mem-ptr { color: #fca5a5; }
+        .mem-label { color: #60a5fa; font-weight: bold; border-bottom: 1px dashed #4b5563; padding-bottom: 0.5rem; margin-bottom: 0.5rem; grid-column: 1 / -1; text-align: center;}
+        .mem-invalid { color: #6b7280; text-decoration: line-through; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center"><span class="font-bold text-xl text-gray-700">Rust Masterclass: Chapter 3.1</span></div>
+            <div class="hidden md:block"><nav id="desktop-nav" class="ml-10 flex items-baseline space-x-4">
+                <a href="#intro" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Intro</a>
+                <a href="#memory" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Memory</a>
+                <a href="#ownership" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Ownership</a>
+                <a href="#borrowing" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Borrowing</a>
+                <a href="#project" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Project</a>
+            </nav></div>
+            <div class="-mr-2 flex md:hidden"><button id="mobile-menu-button" class="bg-gray-100 p-2 rounded-md text-gray-500"><svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg><svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div>
+        </div></div>
+        <div class="md:hidden hidden" id="mobile-menu"><div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a href="#intro" class="nav-link-mobile block p-2 rounded-md">Intro</a><a href="#memory" class="nav-link-mobile block p-2 rounded-md">Memory</a><a href="#ownership" class="nav-link-mobile block p-2 rounded-md">Ownership</a><a href="#borrowing" class="nav-link-mobile block p-2 rounded-md">Borrowing</a><a href="#project" class="nav-link-mobile block p-2 rounded-md">Project</a>
+        </div></div>
+    </header>
+
+    <main class="pt-24"><div class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 3.1: The Core Mechanic, Uncut</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">Ownership, Memory, and the Machine</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">This is it. We are going to build, from the ground up, a deep and physical intuition for how Rust manages memory. Forget everything you know about garbage collectors. We are going to look at the machine itself, and from that, we will derive the rules of Ownership as a logical necessity. This chapter is the key to everything.</p>
+        </header>
+
+        <article class="space-y-20">
+            <section id="memory" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Memory, In Detail: A Tale of Two Tiers</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>In Python, memory is an abstract concept handled for you by the interpreter. In Rust, understanding memory is essential. All data your program uses is stored in RAM, which Rust divides into two main regions: the Stack and the Heap. Let's use an analogy from your world.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">The Stack: The NOC Engineer's Clipboard</h3>
+                        <p class="mt-2">
+                        Imagine you're an engineer in a Network Operations Center (NOC). When a new task comes in—say, `configure_interface()`—you grab a fresh sheet on your clipboard. This sheet is a "stack frame." On it, you write down all the fixed-size information you need for that one task: the interface number (`id: u32`), its status (`is_active: bool`), the VLAN ID (`vlan: u16`).
+                        </p>
+                        <p class="mt-2">
+                        This system is incredibly fast for three reasons:
+                        <ol>
+                            <li><strong>Allocation is trivial:</strong> "Allocating" space on the stack is as simple as the CPU moving a single pointer (the "stack pointer") down to make room. There's no complex search for available memory.</li>
+                            <li><strong>Data is local:</strong> All the data for the current task is right there, next to each other, on one sheet. This is extremely cache-friendly for the CPU.</li>
+                            <li><strong>Deallocation is trivial:</strong> When the task is done (the function returns), you simply throw away the sheet. Poof. All the memory is "freed" instantly by moving the stack pointer back up.</li>
+                        </ol>
+                        The defining feature of the Stack is that <strong>you must know the exact size of everything you put on it before the program runs</strong>. A `u32` is always 32 bits. A `bool` is always 8 bits. You can't put a router hostname on the clipboard sheet, because you don't know if it will be "R1" or "Kampala-Metro-Edge-Router-7B-Sector-4".
+                        </p>
+                    </div>
+                    
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">The Heap: The Data Center Rack Request</h3>
+                        <p class="mt-2">
+                        What happens when you need space for that long, dynamic hostname? You can't put it on your clipboard. You have to request space from the main data center floor. This is the Heap.
+                        </p>
+                        <p class="mt-2">
+                        The process, called "allocation," is much more involved:
+                        <ol>
+                            <li>You submit a request to the Data Center Manager (the memory allocator): "I need 32 bytes of space for a hostname."</li>
+                            <li>The Manager checks its records to find an empty rack of at least that size. This takes time and computation.</li>
+                            <li>It reserves the rack for you and updates its records.</li>
+                            <li>It hands you back a "work ticket" with the rack's location on it: <strong>Row A, Rack 12</strong>. This ticket is a "pointer." The ticket itself is small and has a fixed size, so you can write it down on your Stack clipboard.</li>
+                        </ol>
+                        Getting to your data is now a two-step process: first, look at the ticket on your fast clipboard (the Stack), then walk out onto the data center floor to the correct rack (the Heap). This is why the Heap is slower to access.
+                        </p>
+                        <p class="mt-2">This raises the billion-dollar question that every systems language must answer: <strong>Who is responsible for telling the Data Center Manager that Rack A, Rack 12 is now empty so someone else can use it?</strong> If you forget, you have a "memory leak." If two people try to free it at the same time, you have a "double free" and your program crashes. This is the entire problem that Ownership was created to solve.
+                        </p>
+                    </div>
+
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">Visualizing Data in Memory: Step-by-Step</h3>
+                    <p>Let's see this in action with our router config.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let vlan_id: u16 = 100;
+    let hostname = String::from("R1-Kampala");
+}</code></pre></div>
+                    <p>Here's what memory looks like as this code runs:</p>
+                    <ol class="list-decimal list-inside space-y-4">
+                        <li>After `let vlan_id: u16 = 100;` is executed:
+                            <div class="memory-diagram mt-2">
+                                <div>
+                                    <div class="mem-label">THE STACK</div>
+                                    <pre><span class="mem-address">name: vlan_id</span>
+<span class="mem-address">value:</span> <span class="mem-value">100</span></pre>
+                                </div>
+                                <div>
+                                    <div class="mem-label">THE HEAP</div>
+                                    <pre>// Empty</pre>
+                                </div>
+                            </div>
+                            <p>The value `100` is placed directly on the stack. Simple and fast.</p>
+                        </li>
+                        <li>After `let hostname = String::from("R1-Kampala");` is executed:
+                            <div class="memory-diagram mt-2">
+                                <div>
+                                    <div class="mem-label">THE STACK</div>
+                                    <pre><span class="mem-address">name: vlan_id</span>
+<span class="mem-address">value:</span> <span class="mem-value">100</span>
+
+<span class="mem-address">name: hostname</span>
+<span class="mem-address">ptr:</span> <span class="mem-ptr">0xDEF456</span>
+<span class="mem-address">len:</span> <span class="mem-value">10</span>
+<span class="mem-address">capacity:</span> <span class="mem-value">10</span></pre>
+                                </div>
+                                <div>
+                                    <div class="mem-label">THE HEAP</div>
+                                    <pre><span class="mem-address">address: 0xDEF456</span>
+<span class="mem-address">value:</span> <span class="mem-value">"R1-Kampala"</span></pre>
+                                </div>
+                            </div>
+                            <p>The code asks for space on the Heap for the text. The allocator provides it at address `0xDEF456`. The `hostname` variable on the Stack stores that address (the pointer), along with the length and capacity of the text.</p>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <section id="ownership" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Ownership: The Solution</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Rust's answer to "who cleans up the Heap?" is Ownership. The rules are simple, but the compiler enforces them relentlessly.</p>
+                    <ol class="list-decimal list-inside font-semibold space-y-2">
+                        <li>Each value in Rust has a variable that’s called its <strong>owner</strong>. (The variable holding the "work ticket" is the owner of the rack).</li>
+                        <li>There can only be <strong>one owner</strong> at a time. (You can't have two people holding the same original work ticket).</li>
+                        <li>When the owner goes out of scope, the value is <strong>dropped</strong>. (When the engineer with the ticket leaves for the day, a rule says the rack must be decommissioned immediately).</li>
+                    </ol>
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">The "Move" in Action: A Visual Walkthrough</h3>
+                    <p>Let's see what happens when we assign a `String` to another variable.</p>
+                    <div class="code-block"><pre><code class="language-rust">let config1 = String::from("hostname R1");
+let config2 = config1;</code></pre></div>
+                     <ol class="list-decimal list-inside space-y-4">
+                        <li>Initially, after `let config1 = String::from("hostname R1");`:
+                            <div class="memory-diagram mt-2">
+                                <div>
+                                    <div class="mem-label">THE STACK</div>
+                                    <pre><span class="mem-address">name: config1</span>
+<span class="mem-address">ptr:</span> <span class="mem-ptr">0xXYZ789</span>
+<span class="mem-address">...</span></pre>
+                                </div>
+                                <div>
+                                    <div class="mem-label">THE HEAP</div>
+                                    <pre><span class="mem-address">address: 0xXYZ789</span>
+<span class="mem-address">value:</span> <span class="mem-value">"hostname R1"</span></pre>
+                                </div>
+                            </div>
+                            <p>`config1` owns the heap data.</p>
+                        </li>
+                        <li>When `let config2 = config1;` is executed:
+                             <div class="memory-diagram mt-2">
+                                <div>
+                                    <div class="mem-label">THE STACK</div>
+                                    <pre><span class="mem-address name: config1"></span>
+<span class="mem-address mem-invalid">ptr: 0xXYZ789</span>
+<span class="mem-address mem-invalid">... (INVALIDATED)</span>
+
+<span class="mem-address">name: config2</span>
+<span class="mem-address">ptr:</span> <span class="mem-ptr">0xXYZ789</span>
+<span class="mem-address">...</span>
+</pre>
+                                </div>
+                                <div>
+                                    <div class="mem-label">THE HEAP</div>
+                                    <pre><span class="mem-address">address: 0xXYZ789</span>
+<span class="mem-address">value:</span> <span class="mem-value">"hostname R1"</span></pre>
+                                </div>
+                            </div>
+                            <p>Rust does a cheap copy of the data on the stack (the pointer, length, and capacity). It does <strong>not</strong> copy the expensive data on the Heap. Then, to prevent a double-free, it <strong>invalidates `config1`</strong>. Now, only `config2` is the owner. This is a <strong>move</strong>.</p>
+                        </li>
+                    </ol>
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">Stack-Only Data: The `Copy` Trait</h3>
+                    <p>So why does `let x = 5; let y = x;` work fine? Because `i32` has no Heap component. The data is entirely on the Stack. Copying a `i32` is so cheap that there's no reason to invalidate `x`. Types like this are said to have the `Copy` trait. All scalar types are `Copy`.</p>
+                </div>
+            </section>
+            
+            <section id="borrowing" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Borrowing and References: Access Without Ownership</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Constantly moving ownership would be very inconvenient. We need a way for functions to use data without taking the "work ticket." This is done by creating a <strong>reference</strong>, which lets code "borrow" access to a value.</p>
+                    <div class="concept-box">
+                        <h3 class="font-bold text-lg text-sky-900">Case Study: Auditing and Reconfiguring a Router</h3>
+                        <p class="mt-2 text-sky-800">An auditor needs to view the hostname (read-only access), while an administrator needs to change it (write access).</p>
+                    </div>
+                    <p>A reference is like making a photocopy of your work ticket to give to an auditor. They can see the rack location, but they can't decommission it. We create a reference with `&`.</p>
+                     <div class="code-block"><pre><code class="language-rust">fn main() {
+    let router_hostname = String::from("Kampala-Core-R1"); // `router_hostname` owns the String.
+    audit_hostname(&router_hostname); // We pass a reference (a borrow).
+    println!("Configuration complete for: {}", router_hostname); // We still have ownership.
+}
+
+fn audit_hostname(hostname: &String) {
+    println!("Auditing hostname: {}. Length is {}.", hostname, hostname.len());
+}</code></pre></div>
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">Mutable Borrows</h3>
+                    <p>To change the configuration, we can create a <strong>mutable reference</strong> using `&mut`. This is like giving an admin special, temporary access to the rack. The compiler strictly enforces these rules:</p>
+                    <ol class="list-decimal list-inside font-semibold space-y-2">
+                        <li>You can have any number of <strong>immutable borrows</strong> (`&T`). (Many auditors).</li>
+                        <li>You can only have <strong>one mutable borrow</strong> (`&mut T`). (One admin).</li>
+                        <li>You cannot have a mutable borrow while immutable borrows exist. (No auditing during configuration changes).</li>
+                    </ol>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let mut router_hostname = String::from("KLA-R1");
+    println!("Old hostname: {}", router_hostname);
+    change_hostname(&mut router_hostname);
+    println!("New hostname: {}", router_hostname);
+}
+
+fn change_hostname(hostname: &mut String) {
+    hostname.push_str("-Prod");
+}</code></pre></div>
+                </div>
+            </section>
+            
+            <section id="project" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter Project: A Simple Router Config Manager</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Let's tie all these concepts together. We will create a small program that simulates managing a router, paying close attention to where our data lives and who owns it.</p>
+                    <div class="exercise">
+                        <h4 class="font-bold text-lg text-yellow-900">Your Task: Build the Config Manager</h4>
+                        <ol class="list-decimal list-inside mt-3 space-y-2 text-yellow-800">
+                            <li>Create a new binary crate: `cargo new config_manager`.</li>
+                            <li>Replace `src/main.rs` with the complete code below.</li>
+                            <li>Read every comment to trace how ownership and borrowing are used.</li>
+                            <li>Run the project with `cargo run` and observe the output.</li>
+                        </ol>
+                        <h4>Final Code: `src/main.rs`</h4>
+                        <div class="code-block"><pre><code class="language-rust">fn main() {
+    // 1. Creation: We request space on the Heap for our config. `router_config` owns it.
+    let mut router_config = String::from("hostname R1");
+    println!("[main]: Initial config created: '{}'", router_config);
+
+    // 2. Immutable Borrow: We lend read-only access to an auditor.
+    audit_config(&router_config);
+    
+    // 3. Mutable Borrow: We lend write access to an admin to update it.
+    add_interface(&mut router_config, "GigabitEthernet0/0");
+    println!("[main]: Config after modification: '{}'", router_config);
+
+    // 4. Ownership Transfer (Move): We move ownership of the config
+    // to the deployment function. After this, `router_config` is no longer valid.
+    deploy_config(router_config);
+
+    // The following line would cause a compile error because ownership was moved!
+    // println!("Config in main after deploy: {}", router_config);
+    println!("[main]: Config has been deployed. `main` can no longer access it.");
+}
+
+/// This function borrows the config immutably to read it.
+fn audit_config(config: &String) {
+    println!("[audit]: I have read-only access. Config length is {}.", config.len());
+}
+
+/// This function borrows the config mutably to modify it.
+fn add_interface(config: &mut String, interface_name: &str) {
+    println!("[admin]: I have write access. Adding new interface...");
+    config.push_str("\ninterface ");
+    config.push_str(interface_name);
+}
+
+/// This function takes ownership of the config to "deploy" it.
+fn deploy_config(config: String) {
+    println!("[deploy]: I am now the owner of the config. Deploying to device...");
+    println!("          Final config: '{}'", config);
+    // `config` goes out of scope here, and its Heap memory is dropped (cleaned up).
+}
+</code></pre></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="next" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">Final Thoughts and a Preamble to Chapter 4</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>This was the most challenging, and most important, chapter yet. You now have a physical, mechanical intuition for how Rust manages memory. You know why the Stack is fast, why the Heap is necessary, and you understand Ownership not as a set of arbitrary rules, but as the logical, safe way to manage the Heap.</p>
+                    <p>In our case study, we used a simple `String` to represent our entire router configuration. This is unrealistic. A real configuration is a complex collection of different data: hostnames, interface settings, access control lists, routing protocols, and more.</p>
+                    <p>How can we represent this complex, structured data in Rust? That is the question that leads us to our next chapter.</p>
+                    <p><strong>In Chapter 4, "Blueprints for Data: Structs and Enums,"</strong> we will learn how to create our own custom data types. We will move beyond simple strings and integers and learn to build sophisticated blueprints like `RouterConfig` and `AccessControlRule` that perfectly model the real-world data of our network systems. We will learn how to organize our data, making our code more readable, more robust, and more powerful.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+            document.querySelectorAll('.nav-link-mobile').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.add('hidden'); }); });
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { rootMargin: "-20% 0px -80% 0px" });
+            sections.forEach(section => { observer.observe(section); });
+        });
+    </script>
+</body>
+</html>
+

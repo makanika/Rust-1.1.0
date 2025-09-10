@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 3.2: The Router Config, Uncut</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .nav-link.active { color: #3b82f6; border-bottom-width: 2px; border-color: #3b82f6; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .deep-dive { background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #312e81; }
+        .compiler-error { background-color: #111827; color: #d1d5db; padding: 1.5rem; border-radius: 0.5rem; margin: 1rem 0; font-family: 'Source Code Pro', monospace; font-size: 0.9em; }
+        .memory-diagram { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background-color: #1f2937; color: #f9fafb; font-family: 'Source Code Pro', monospace; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;}
+        .mem-address { color: #9ca3af; }
+        .mem-value { color: #a7f3d0; }
+        .mem-ptr { color: #fca5a5; }
+        .mem-label { color: #60a5fa; font-weight: bold; border-bottom: 1px dashed #4b5563; padding-bottom: 0.5rem; margin-bottom: 0.5rem; grid-column: 1 / -1; text-align: center;}
+        .mem-invalid { color: #6b7280; text-decoration: line-through; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center"><span class="font-bold text-xl text-gray-700">Rust Masterclass: Chapter 3.2</span></div>
+            <div class="hidden md:block"><nav id="desktop-nav" class="ml-10 flex items-baseline space-x-4">
+                <a href="#intro" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Intro</a>
+                <a href="#birth" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Birth</a>
+                <a href="#audit" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Audit</a>
+                <a href="#reconfig" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Reconfig</a>
+                <a href="#deploy" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Deploy</a>
+                <a href="#cleanup" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Cleanup</a>
+                <a href="#next" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Next Chapter</a>
+            </nav></div>
+            <div class="-mr-2 flex md:hidden"><button id="mobile-menu-button" class="bg-gray-100 p-2 rounded-md text-gray-500"><svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button></div>
+        </div></div>
+        <div class="md:hidden hidden" id="mobile-menu"><div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+             <a href="#intro" class="nav-link-mobile block p-2 rounded-md">Intro</a><a href="#birth" class="nav-link-mobile block p-2 rounded-md">Birth</a><a href="#audit" class="nav-link-mobile block p-2 rounded-md">Audit</a><a href="#reconfig" class="nav-link-mobile block p-2 rounded-md">Reconfig</a><a href="#deploy" class="nav-link-mobile block p-2 rounded-md">Deploy</a><a href="#cleanup" class="nav-link-mobile block p-2 rounded-md">Cleanup</a><a href="#next" class="nav-link-mobile block p-2 rounded-md">Next Chapter</a>
+        </div></div>
+    </header>
+
+    <main class="pt-24"><div class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 3.2: The Router Configuration, Uncut</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">The Lifecycle of a `String`</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">This is a pure, practical lab. We have one goal: to follow a single piece of router configuration data from its birth in memory to its final cleanup. We will see how Ownership and Borrowing are not abstract rules, but a practical system for safely managing this data's lifecycle. Every example builds on the last.</p>
+        </header>
+
+        <article class="space-y-20">
+            <section id="birth" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">1. The Birth: Creating the Initial Configuration</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Our story begins in the `main` function. As a network engineer, your first step is to create a base configuration. We'll start with just a hostname.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let mut config = String::from("hostname R1");
+}</code></pre></div>
+                    <p>Let's break down exactly what happens in the machine when this single line of code runs.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Step-by-Step Memory Allocation</h3>
+                        <ol class="list-decimal list-inside">
+                            <li><strong>Why `String`?</strong> The text `"hostname R1"` could change. We might add more lines. Because its size is not fixed and known at compile time, it <strong>must</strong> be stored on the Heap. The `String` type is Rust's standard tool for managing heap-allocated text.</li>
+                            <li><strong>Allocation Request:</strong> The `String::from()` function makes a request to the memory allocator: "I need space on the Heap for 11 bytes of text."</li>
+                            <li><strong>Heap Allocation:</strong> The allocator finds an empty spot, reserves it, and stores the bytes for "hostname R1" there. Let's say it's at memory address `0x9e2b0`.</li>
+                            <li><strong>Stack Variable:</strong> Now, the variable `config` is created on the Stack. It does <strong>not</strong> hold the text. It holds a "fat pointer" containing three pieces of fixed-size information:
+                                <ul>
+                                    <li><strong>Pointer (`ptr`):</strong> The address of the data on the Heap (`0x9e2b0`).</li>
+                                    <li><strong>Length (`len`):</strong> How many bytes of memory are currently being used (`11`).</li>
+                                    <li><strong>Capacity (`cap`):</strong> How many bytes the allocator reserved on the Heap. For a new string, this is usually equal to the length (`11`).</li>
+                                </ul>
+                            </li>
+                            <li><strong>Ownership:</strong> At this moment, the variable `config` is declared the <strong>owner</strong> of the heap memory at `0x9e2b0`. It is now responsible for this data.</li>
+                        </ol>
+                        <div class="memory-diagram">
+                            <div><div class="mem-label">STACK</div><pre><span class="mem-address">name: config</span>
+<span class="mem-address">ptr:</span> <span class="mem-ptr">0x9e2b0</span>
+<span class="mem-address">len:</span> <span class="mem-value">11</span>
+<span class="mem-address">cap:</span> <span class="mem-value">11</span></pre></div>
+                            <div><div class="mem-label">HEAP</div><pre><span class="mem-address">addr: 0x9e2b0</span>
+<span class="mem-address">val:</span> <span class="mem-value">"hostname R1"</span></pre></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="audit" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">2. The Audit: Immutable Borrows (&)</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Now, a separate process—an auditor—needs to read this configuration to check its length. We don't want the auditor to take ownership; `main` is still working on the config. So, we lend them read-only access. This is an <strong>immutable borrow</strong>.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let mut config = String::from("hostname R1");
+    audit_config(&config); // Note the ampersand `&`
+}
+
+fn audit_config(config_ref: &String) {
+    println!("Auditing... config length is {}.", config_ref.len());
+}</code></pre></div>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">What is a Reference, Physically?</h3>
+                        <p class="mt-2">A reference is a pointer. When we call `audit_config(&config)`, we are not passing the `String` struct. We are creating a new variable on the stack for `audit_config` called `config_ref`, and its value is simply the memory address of the original `config` variable. It's a "reference" to the original.</p>
+                        <div class="memory-diagram">
+                           <div><div class="mem-label">STACK</div><pre><span class="mem-address">// audit_config frame</span>
+<span class="mem-address">name: config_ref</span>
+<span class="mem-address">ptr:</span> <span class="mem-ptr">0x7ffc... (addr of config)</span>
+
+<span class="mem-address">// main frame</span>
+<span class="mem-address">name: config</span>
+<span class="mem-address">ptr:</span> <span class="mem-ptr">0x9e2b0</span>
+<span class="mem-address">len:</span> <span class="mem-value">11</span>
+<span class="mem-address">cap:</span> <span class="mem-value">11</span></pre></div>
+                           <div><div class="mem-label">HEAP</div><pre><span class="mem-address">addr: 0x9e2b0</span>
+<span class="mem-address">val:</span> <span class="mem-value">"hostname R1"</span></pre></div>
+                        </div>
+                        <h3 class="deep-dive-title mt-4">The Compiler as Security Guard</h3>
+                        <p class="mt-2">What if the auditor tries to change the config? Let's try it.</p>
+                        <div class="code-block"><pre><code class="language-rust">fn audit_config(config_ref: &String) {
+    config_ref.push_str(" // AUDITED"); // Will this work?
+}</code></pre></div>
+                        <p class="mt-2">If you try to compile this, you get a clear error:</p>
+                        <div class="compiler-error"><pre>error[E0596]: cannot borrow `*config_ref` as mutable, as it is behind a `&` reference
+ --> src/main.rs:7:5
+  |
+6 | fn audit_config(config_ref: &String) {
+  |                           ------- help: consider changing this to be a mutable reference: `&mut String`
+7 |     config_ref.push_str(" // AUDITED");
+  |     ^^^^^^^^^^ `config_ref` is a `&` reference, so the data it refers to cannot be borrowed as mutable</pre></div>
+                        <p class="mt-2">The compiler is acting as a security guard. It sees that `config_ref` is a read-only pass (`&String`) and denies the attempt to write. It even suggests the fix: if you want to write, you need a different kind of pass (`&mut String`).</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="reconfig" class="scroll-mt-20">
+                 <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">3. The Reconfiguration: Mutable Borrows (&mut)</h2>
+                 <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Next, an administrator needs to add an interface to the config. This requires write access. For this, we use a <strong>mutable borrow</strong> (`&mut`). This grants exclusive access.</p>
+                     <div class="code-block"><pre><code class="language-rust">fn main() {
+    let mut config = String::from("hostname R1");
+    add_interface(&mut config); // Note the `&mut`
+}
+
+fn add_interface(config_ref: &mut String) {
+    config_ref.push_str("\ninterface Gi0/1");
+}</code></pre></div>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">The "One Writer" Rule</h3>
+                        <p class="mt-2">A mutable borrow is a powerful, exclusive lock. While a mutable borrow is active, the compiler will not allow *any* other access to the original data, not even for reading. This is the heart of Rust's "fearless concurrency." It prevents data races at compile time.</p>
+                        <p class="mt-2">Let's prove it by trying to have an auditor and an admin work at the same time.</p>
+                         <div class="code-block"><pre><code class="language-rust">fn main() {
+    let mut config = String::from("hostname R1");
+    let admin_access = &mut config; // Mutable borrow starts here
+    let auditor_access = &config;  // Immutable borrow tries to start here
+
+    // ... use admin_access and auditor_access
+}</code></pre></div>
+                        <div class="compiler-error"><pre>error[E0502]: cannot borrow `config` as immutable because it is also borrowed as mutable
+ --> src/main.rs:4:26
+  |
+3 |     let admin_access = &mut config;
+  |                        ----------- mutable borrow occurs here
+4 |     let auditor_access = &config;
+  |                          ^^^^^^^ immutable borrow occurs here</pre></div>
+                        <p class="mt-2">The compiler stops you cold. It explains that you can't have a read-only `auditor_access` while the write-access `admin_access` exists. This rule prevents an auditor from reading a half-written configuration, which could lead to disastrous errors in a real system.</p>
+                    </div>
+                 </div>
+            </section>
+            
+            <section id="deploy" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">4. The Deployment: The Move</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>The configuration is finalized. It's time to hand it off to the deployment system. We don't want `main` to be able to change it after this point. We need to transfer full responsibility. We do this by passing the variable by value, which causes a <strong>move</strong>.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let mut config = String::from("hostname R1\ninterface Gi0/1");
+    deploy_config(config); // No `&`. We are moving ownership.
+    
+    // `config` is now invalid here!
+}
+
+fn deploy_config(final_config: String) {
+    println!("Deploying config: {}", final_config);
+    // `final_config` is now the owner.
+}</code></pre></div>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Visualizing the Move</h3>
+                        <p class="mt-2">This is the most critical transition to understand.</p>
+                        <ol class="list-decimal list-inside">
+                            <li><strong>Before the call:</strong> `main`'s `config` variable on the Stack owns the Heap data.</li>
+                            <li><strong>During the call:</strong> A new stack frame is created for `deploy_config`. The content of the `config` variable (the ptr, len, cap) is copied to the `final_config` variable.</li>
+                            <li><strong>The Invalidation:</strong> To enforce the "one owner" rule, the compiler immediately marks the original `config` variable in `main` as uninitialized and invalid. It cannot be used again.</li>
+                        </ol>
+                        <div class="memory-diagram">
+                             <div><div class="mem-label">STACK</div><pre><span class="mem-address">// deploy_config frame</span>
+<span class="mem-address">name: final_config</span>
+<span class="mem-address">ptr:</span> <span class="mem-ptr">0x9e2b0</span>
+<span class="mem-address">len:</span> <span class="mem-value">28</span>
+<span class="mem-address">cap:</span> <span class="mem-value">28</span>
+
+<span class="mem-address">// main frame</span>
+<span class="mem-address">name: config</span>
+<span class="mem-address mem-invalid">ptr: 0x9e2b0</span>
+<span class="mem-address mem-invalid">len: 28</span>
+<span class="mem-address mem-invalid">cap: 28</span></pre></div>
+                             <div><div class="mem-label">HEAP</div><pre><span class="mem-address">addr: 0x9e2b0</span>
+<span class="mem-address">val:</span> <span class="mem-value">"hostname R1\n..."</span></pre></div>
+                        </div>
+                        <p class="mt-2">If you try to use `config` in `main` after the call, you get the familiar error:</p>
+                        <div class="compiler-error"><pre>error[E0382]: borrow of moved value: `config`</pre></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="cleanup" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">5. The Cleanup: The `drop`</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Our story ends when the owner of the data goes out of scope. In our example, this happens when the `deploy_config` function finishes.</p>
+                     <div class="deep-dive">
+                        <h3 class="deep-dive-title">Automatic Deallocation</h3>
+                        <p class="mt-2">Because `final_config` is the sole owner, when it goes out of scope at the end of the function, Rust automatically inserts a call to a special function called `drop`. This function's job is to return the memory on the Heap to the allocator. The rack is now officially decommissioned and can be used by someone else.</p>
+                        <p class="mt-2">This is the beauty of the system. Cleanup is deterministic and automatic. It happens as soon as the owner is done, not at some random time when a garbage collector feels like running. For embedded systems, this predictability is a priceless feature.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="next" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">Final Thoughts and a Preamble to Chapter 4</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>You have now seen the entire lifecycle of a piece of dynamic data, from its allocation on the Heap to its cleanup when the owner is dropped. You have a physical, mechanical intuition for what `move`, `borrow`, and `mutable borrow` actually mean in memory. This is the hardest part of learning Rust, and you have just tackled it head-on.</p>
+                    <p>In our case study, we used a simple `String` to represent our entire router configuration. This is unrealistic. A real configuration is a complex collection of different data: hostnames, interface settings, access control lists, routing protocols, and more.</p>
+                    <p>How can we represent this complex, structured data in Rust? That is the question that leads us to our next chapter.</p>
+                    <p><strong>In Chapter 4, "Blueprints for Data: Structs and Enums,"</strong> we will learn how to create our own custom data types. We will move beyond simple strings and integers and learn to build sophisticated blueprints like `RouterConfig` and `AccessControlRule` that perfectly model the real-world data of our network systems. We will learn how to organize our data, making our code more readable, more robust, and more powerful.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+            document.querySelectorAll('.nav-link-mobile').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.add('hidden'); }); });
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { rootMargin: "-20% 0px -80% 0px" });
+            sections.forEach(section => { observer.observe(section); });
+        });
+    </script>
+</body>
+</html>
