@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust for the Network Engineer - Detailed Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        /* Chosen Palette: Refined Neutral with a touch of deep blue */
+        /* Application Structure Plan: A single-page layout with a fixed top navigation bar. The content is significantly expanded for a zero-assumption approach. Key concepts are introduced with analogies, detailed explanations of syntax, memory layout diagrams (using HTML/CSS), and code examples that show both correct usage and common compiler errors to aid learning. */
+        /* Visualization & Content Choices:
+        - Report Info: Memory concepts (Stack vs. Heap). Goal: Explain. Viz/Presentation: HTML/CSS diagrams. Interaction: Static visual aid. Justification: Crucial for understanding Ownership, and a visual representation is far clearer than text. Library/Method: Tailwind CSS.
+        - Report Info: Core Rust concepts (Ownership, Borrowing). Goal: Organize/Explain. Viz/Presentation: Interactive HTML/CSS diagrams. Interaction: User clicks to trigger state changes. Justification: Actively engaging with memory state changes reinforces learning. Library/Method: Vanilla JS + Tailwind CSS.
+        - Report Info: Code examples and compiler errors. Goal: Inform/Teach. Viz/Presentation: Syntax-highlighted code blocks. Interaction: "Copy to Clipboard" button. Justification: Showing common errors and explaining them is a highly effective teaching method. Library/Method: highlight.js.
+        */
+        /* CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. */
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: #f8f9fa;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Lora', serif;
+        }
+        pre code.hljs {
+            font-family: 'Source Code Pro', monospace;
+        }
+        .prose {
+             font-size: 1.125rem;
+             line-height: 1.75;
+        }
+        .nav-link.active {
+            color: #3b82f6; /* blue-500 */
+            border-bottom-width: 2px;
+            border-color: #3b82f6;
+        }
+        .code-block {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #374151;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, background-color 0.2s;
+            border: 1px solid #4b5563;
+        }
+        .copy-btn:hover {
+            background-color: #4b5563;
+        }
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+        .ownership-diagram .box {
+            transition: all 0.5s ease-in-out;
+        }
+        .memory-diagram {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .memory-stack, .memory-heap {
+            flex: 1;
+            border: 2px solid #9ca3af;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: white;
+        }
+        .memory-stack h4, .memory-heap h4 {
+            text-align: center;
+            font-family: 'Source Code Pro';
+            color: #4b5563;
+            border-bottom: 1px dashed #d1d5db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .mem-block {
+            background-color: #e0f2fe;
+            border: 1px solid #7dd3fc;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Source Code Pro';
+            font-size: 0.9rem;
+        }
+        .mem-block .label { font-weight: bold; color: #0c4a6e; }
+        .mem-block .value { color: #075985; }
+        .mem-block .ptr { color: #be123c; font-style: italic; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-gray-700">Rust: Detailed Edition</span>
+                </div>
+                <div class="hidden md:block">
+                    <nav id="desktop-nav" class="ml-10 flex items-baseline space-x-4">
+                        <a href="#ch1" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium transition-colors">Intro</a>
+                        <a href="#ch2" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium transition-colors">Fundamentals</a>
+                        <a href="#ch3" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium transition-colors">Ownership</a>
+                        <a href="#ch4" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium transition-colors">Data</a>
+                        <a href="#ch5" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium transition-colors">Project</a>
+                        <a href="#ch6" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium transition-colors">Embedded</a>
+                    </nav>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button id="mobile-menu-button" type="button" class="bg-gray-100 inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="md:hidden hidden" id="mobile-menu"><div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a href="#ch1" class="nav-link-mobile block text-gray-600 hover:bg-gray-100 hover:text-blue-500 px-3 py-2 rounded-md text-base font-medium transition-colors">Intro</a><a href="#ch2" class="nav-link-mobile block text-gray-600 hover:bg-gray-100 hover:text-blue-500 px-3 py-2 rounded-md text-base font-medium transition-colors">Fundamentals</a><a href="#ch3" class="nav-link-mobile block text-gray-600 hover:bg-gray-100 hover:text-blue-500 px-3 py-2 rounded-md text-base font-medium transition-colors">Ownership</a><a href="#ch4" class="nav-link-mobile block text-gray-600 hover:bg-gray-100 hover:text-blue-500 px-3 py-2 rounded-md text-base font-medium transition-colors">Data</a><a href="#ch5" class="nav-link-mobile block text-gray-600 hover:bg-gray-100 hover:text-blue-500 px-3 py-2 rounded-md text-base font-medium transition-colors">Project</a><a href="#ch6" class="nav-link-mobile block text-gray-600 hover:bg-gray-100 hover:text-blue-500 px-3 py-2 rounded-md text-base font-medium transition-colors">Embedded</a>
+        </div></div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-24">
+        <div class="max-w-4xl mx-auto p-6 md:p-10">
+            <header class="mb-16 text-center">
+                <h1 class="text-5xl font-bold text-gray-800">Your Three-Week Rust Masterclass</h1>
+                <p class="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">A detailed, zero-assumptions guide for the Python developer and network engineer heading into embedded systems.</p>
+            </header>
+
+            <article class="space-y-20">
+                <!-- Chapter 1 -->
+                <section id="ch1" class="scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter 1: The Rust Bridge</h2>
+                    <div class="prose max-w-none text-gray-700 space-y-4">
+                        <p>Welcome! Your background in Python and networking is the perfect launchpad for Rust. You already think about data flow and system architecture. Rust provides the tools to build software for those systems with unparalleled performance and safety. It achieves this by shifting many checks from runtime (when the program is running) to compile time (when you are building it). This means the compiler becomes your proactive partner, catching potential bugs before they ever reach a production system.</p>
+                        
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">1.1 Anatomy of a Rust Program</h3>
+                        <p>After running `cargo new hello_rust`, you get a file `src/main.rs` with this content:</p>
+                        <div class="code-block"><pre><code class="language-rust">fn main() {
+    println!("Hello, world!");
+}</code></pre></div>
+                        <p>Let's break this down piece by piece:</p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><code>fn main()</code>: <code>fn</code> is the keyword to declare a function. <code>main</code> is the special name for the function that serves as the entry point for every executable Rust program. The parentheses <code>()</code> indicate that this function takes no input parameters.</li>
+                            <li><code>{ ... }</code>: The curly braces define the "body" or "scope" of the function. All the code that belongs to this function lives inside these braces.</li>
+                            <li><code>println!("Hello, world!");</code>: This line does the printing. <code>println!</code> is a <strong>macro</strong>, not a function. We know it's a macro because of the exclamation mark <code>!</code>. Macros are a way of writing code that writes other code, which gives them more power than regular functions (e.g., taking a variable number of arguments). For now, just remember that when you see a <code>!</code>, you're calling a macro.</li>
+                             <li><code>"Hello, world!"</code>: This is a "string literal," a sequence of text. It's passed as an argument to the macro.</li>
+                            <li><code>;</code>: The semicolon marks the end of a statement. Most lines of Rust code end with a semicolon.</li>
+                        </ul>
+
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">1.2 Meet Cargo, Your Project Manager</h3>
+                        <p>In Python, you have `pip` for libraries, `venv` for environments, and `setuptools` for building. Rust's <strong>Cargo</strong> integrates all these roles. It's the command center for your entire project.</p>
+                        <p>When you run <code>cargo new network_pinger</code>, it creates this structure:</p>
+                        <div class="code-block"><pre><code class="language-text">network_pinger/
+├── Cargo.toml
+└── src/
+    └── main.rs</code></pre></div>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><code>src/main.rs</code>: This is where your application's source code lives. Cargo expects to find the root of your project here.</li>
+                            <li><code>Cargo.toml</code>: The "manifest" file, written in TOML format. It contains all the metadata for your project. This is the equivalent of `pyproject.toml` and `requirements.txt` combined.</li>
+                        </ul>
+                        <p>The first time you run <code>cargo build</code> or <code>cargo run</code>, you'll also see a <code>target</code> directory. This is where Cargo places all the compiled outputs. You never need to edit this directory yourself.</p>
+                    </div>
+                </section>
+                
+                <!-- Chapter 2 -->
+                <section id="ch2" class="scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter 2: From Python to Rust Fundamentals</h2>
+                    <div class="prose max-w-none text-gray-700 space-y-4">
+                        <p>Python is dynamically typed, meaning you can write <code>my_var = 5</code> and later <code>my_var = "hello"</code>. Rust is <strong>statically typed</strong>: the type of every variable must be known by the compiler, and it can never change. This prevents a whole class of runtime errors common in Python.</p>
+
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">2.1 Variables, Mutability, and Types</h3>
+                        <p>In Rust, variables are <strong>immutable by default</strong>. Think of this as a safety setting. You can't change a value unless you explicitly mark it as changeable. This is done with the <code>mut</code> keyword.</p>
+                        <div class="code-block">
+                            <pre><code class="language-rust">// Immutable: like a device's serial number. Set once, never changes.
+let serial_number = "SN-ABC-123";
+
+// Mutable: like a packet counter. It needs to change.
+let mut packets_processed = 0;
+packets_processed = packets_processed + 1; // This is allowed.
+
+// This would cause a compile error!
+// serial_number = "new-serial"; 
+</code></pre>
+                        </div>
+                        <p>Rust needs to know the exact type and size of your data. This is vital for embedded systems where memory is scarce. Here are some fundamental types:</p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Integers</strong>: Signed (<code>i</code>) or unsigned (<code>u</code>), with specific sizes: <code>i8</code>, <code>u8</code>, <code>i16</code>, <code>u16</code>, <code>i32</code>, <code>u32</code>, <code>i64</code>, <code>u64</code>. An IPv4 address octet is perfectly represented by a <code>u8</code> (0-255). A TCP port number is a <code>u16</code> (0-65535).</li>
+                            <li><strong>Floating-Point</strong>: <code>f32</code> (single-precision) and <code>f64</code> (double-precision).</li>
+                            <li><strong>Boolean</strong>: <code>bool</code>, which can be <code>true</code> or <code>false</code>.</li>
+                            <li><strong>Character</strong>: <code>char</code>, representing a single Unicode character, like <code>'a'</code>. Note the single quotes.</li>
+                        </ul>
+
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">2.2 Functions and Control Flow</h3>
+                        <p>Rust functions are explicit. You must declare the type of every argument and the function's return type.</p>
+                        <div class="code-block">
+                            <pre><code class="language-rust">// This function takes a u16 (port) and a boolean, and returns a String.
+fn create_connection_string(port: u16, is_secure: bool) -> String {
+    // let's build a string
+    let protocol = if is_secure { "https" } else { "http" };
+    // format! is a macro like println! but it returns a String instead of printing.
+    format!("{}://localhost:{}", protocol, port)
+}</code></pre>
+                        </div>
+                        <p>Notice there's no <code>return</code> keyword in the function above. In Rust, the last expression in a function is automatically its return value. Also, `if` is an expression, meaning it can return a value. This allows for very concise code.</p>
+                    </div>
+                </section>
+
+                <!-- Chapter 3 -->
+                <section id="ch3" class="scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter 3: The Ownership System (Zero Assumptions)</h2>
+                    <div class="prose max-w-none text-gray-700 space-y-4">
+                        <p>This is Rust's most critical and unique concept. It's how Rust guarantees memory safety without needing a garbage collector. First, we need to understand where values live: the <strong>Stack</strong> and the <strong>Heap</strong>.</p>
+                        <div class="memory-diagram">
+                            <div class="memory-stack">
+                                <h4>THE STACK</h4>
+                                <p class="text-sm text-center text-gray-600 mb-4">Fast. Organized. Last-in, first-out. For data with a known, fixed size.</p>
+                                <div class="mem-block"><span class="label">x:</span> <span class="value">5 (i32)</span></div>
+                                <div class="mem-block"><span class="label">y:</span> <span class="value">true (bool)</span></div>
+                            </div>
+                            <div class="memory-heap">
+                                <h4>THE HEAP</h4>
+                                <p class="text-sm text-center text-gray-600 mb-4">Slower. Less organized. For data that can grow or shrink, like a log file buffer.</p>
+                                 <div class="mem-block"><span class="label">0x1111:</span> <span class="value">"Hello"</span></div>
+                            </div>
+                        </div>
+                        <p>All the scalar types we saw earlier (`i32`, `bool`, etc.) live on the Stack. It's extremely fast. Types that can grow, like a `String`, have a small part on the Stack (a "pointer" to the data) but the actual text data lives on the Heap. Managing Heap memory is complex, and this is where Ownership comes in.</p>
+                        
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">3.1 The Three Rules of Ownership</h3>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li>Each value in Rust has a variable that’s called its <strong>owner</strong>.</li>
+                            <li>There can only be <strong>one owner</strong> at a time. (Like a physical keycard to a server room).</li>
+                            <li>When the owner goes out of scope (e.g., the function ends), the value is <strong>dropped</strong> (memory is automatically freed).</li>
+                        </ol>
+
+                        <p>When you assign a heap-allocated value from one variable to another, ownership <strong>moves</strong>.</p>
+                         <div class="code-block"><pre><code class="language-rust">let s1 = String::from("cisco");
+let s2 = s1; // Ownership of the String data is MOVED from s1 to s2.
+
+// The line below will NOT compile! s1 is no longer a valid owner.
+// println!("s1 is {}", s1); </code></pre></div>
+                        <p>The compiler would give you a `borrow of moved value` error. It's protecting you from accidentally using invalidated data. This prevents "double free" errors, a common security vulnerability in other languages.</p>
+
+                        <div class="ownership-diagram border rounded-lg p-6 bg-white shadow-sm my-8">
+                            <p class="text-center font-bold text-lg mb-4">Interactive: The Move</p>
+                            <div class="flex justify-around items-start">
+                                <div class="text-center"><p class="font-mono text-gray-600">s1</p><div id="owner1" class="box w-32 h-20 bg-blue-500 text-white flex items-center justify-center rounded-lg shadow-lg font-semibold">"router_config"</div></div>
+                                <div class="text-center"><p class="font-mono text-gray-600">s2</p><div id="owner2" class="box w-32 h-20 bg-gray-200 flex items-center justify-center rounded-lg text-gray-500 italic">Empty</div></div>
+                            </div>
+                            <button id="moveBtn" class="block mx-auto mt-6 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">Run `let s2 = s1;`</button>
+                            <p id="moveStatus" class="text-center mt-3 text-sm text-gray-600 h-5"></p>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">3.2 Borrowing: Access Without Ownership</h3>
+                        <p>Moving ownership constantly is impractical. What if we just want a function to read data without taking it? We can lend it, by creating a <strong>reference</strong>. This is called <strong>borrowing</strong>.</p>
+                         <div class="code-block"><pre><code class="language-rust">// This function BORROWS the string via a reference (&String).
+// It does not take ownership.
+fn calculate_length(s: &String) -> usize {
+    s.len()
+} // s goes out of scope, but since it doesn't have ownership, nothing is dropped.
+
+fn main() {
+    let config = String::from("hostname R1");
+    let len = calculate_length(&config); // We pass a reference to config.
+    
+    // We can still use config here because we never moved ownership!
+    println!("The length of '{}' is {}.", config, len);
+}
+</code></pre></div>
+                        <p>The ampersand `&` creates a reference. Just like ownership, borrowing has rules enforced by the compiler:</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li>You can have any number of <strong>immutable references</strong> (<code>&T</code>) to a piece of data. (Many people can read a document at once).</li>
+                            <li>You can only have <strong>one mutable reference</strong> (<code>&mut T</code>) at a time. (Only one person can edit the document at a time).</li>
+                            <li>You cannot have mutable and immutable references at the same time.</li>
+                        </ol>
+                        <p>This is Rust's secret weapon against "data races," a nasty type of bug that happens when multiple threads try to access and change data at the same time.</p>
+                    </div>
+                </section>
+                
+                <!-- Chapter 4 -->
+                <section id="ch4" class="scroll-mt-20">
+                    <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter 4: Your Data Blueprints</h2>
+                    <div class="prose max-w-none text-gray-700 space-y-4">
+                        <p>Now that we understand how data is owned and passed around, let's learn how to create our own custom data types. In Python, you might use a class or a dictionary. In Rust, we use <strong>structs</strong> and <strong>enums</strong>.</p>
+
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">4.1 Structs: Building Your Own Types</h3>
+                        <p>A `struct` is a way to group related data together. Think of it as a blueprint for a concept. If we want to represent a network interface, we can define a struct for it.</p>
+                        <div class="code-block"><pre><code class="language-rust">#[derive(Debug)] // An attribute to let us easily print the struct for debugging
+struct Interface {
+    name: String,
+    ip_address: String,
+    is_enabled: bool,
+}
+
+// We can also implement methods for our struct.
+impl Interface {
+    // This is a method that borrows the struct immutably.
+    fn get_status(&self) -> &str {
+        if self.is_enabled { "Up" } else { "Down" }
+    }
+}
+
+fn main() {
+    let eth0 = Interface {
+        name: String::from("eth0"),
+        ip_address: String::from("192.168.1.10"),
+        is_enabled: true,
+    };
+    
+    println!("Device: {}, Status: {}", eth0.name, eth0.get_status());
+}
+</code></pre></div>
+                        <p>The `impl` block is where we define functions associated with our `Interface` struct. The `&self` parameter is a reference to the instance the method is being called on, just like `self` in Python.</p>
+
+                        <h3 class="text-2xl font-bold text-gray-700 pt-6">4.2 Enums: A Value Can Be One of a Few Things</h3>
+                        <p>Enums (enumerations) are a way to define a type that can have one of a few possible variants. This is incredibly powerful for modeling states or protocols.</p>
+                        <div class="code-block"><pre><code class="language-rust">enum IpAddr {
+    V4(u8, u8, u8, u8), // Variant can hold data
+    V6(String),
+}
+
+fn route(ip: IpAddr) {
+    // The `match` statement is the primary way to interact with enums.
+    // Rust's compiler will ensure you handle EVERY possible variant.
+    match ip {
+        IpAddr::V4(a, b, c, d) => {
+            println!("Routing IPv4 address: {}.{}.{}.{}", a, b, c, d);
+        }
+        IpAddr::V6(addr) => {
+            println!("Routing IPv6 address: {}", addr);
+        }
+    }
+}</code></pre></div>
+                        <p>The most important enums in Rust are `Option<T>` and `Result<T, E>`, which are used for error handling. `Option` is either `Some(value)` or `None`. `Result` is either `Ok(value)` or `Err(error)`. Using `match` on these forces you to handle the "empty" or "error" case, making your code far more robust than checking for `None` in Python.</p>
+                    </div>
+                </section>
+                
+                <!-- Chapters 5 & 6 -->
+                <section id="ch5" class="scroll-mt-20"><h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter 5: Project: Ethernet Frame Parser</h2><div class="prose max-w-none text-gray-700 space-y-4"><p>Let's combine everything we've learned. We'll write a parser that takes a byte slice (`&[u8]`)—a borrowed view of some raw network data—and safely extracts header information without copying any data.</p><div class="code-block"><pre><code class="language-rust">// Our struct will hold slices ('a) that borrow from the original frame data.
+// This is zero-copy: we are not duplicating the MAC addresses in memory.
+#[derive(Debug)]
+struct EthernetHeader<'a> {
+    destination: &'a [u8],
+    source: &'a [u8],
+    ethertype: u16,
+}
+
+// Our function returns a Result, which is either a successfully parsed
+// header or a static string slice describing the error.
+fn parse_ethernet_header<'a>(data: &'a [u8]) -> Result&lt;EthernetHeader<'a>, &'static str&gt; {
+    // Check if we have enough bytes for a header.
+    if data.len() < 14 {
+        return Err("Frame too short for an Ethernet header");
+    }
+
+    // Create slices that point into the original `data` slice.
+    let dest = &data[0..6];
+    let src = &data[6..12];
+    
+    // The EtherType is the 13th and 14th byte. We need to combine them.
+    let ethertype_bytes: [u8; 2] = data[12..14].try_into()
+        .expect("Slice with incorrect length; should be checked by len < 14");
+    // Network data is big-endian, so we convert from big-endian bytes.
+    let ethertype = u16::from_be_bytes(ethertype_bytes);
+
+    // If all is well, return the Ok variant of our Result.
+    Ok(EthernetHeader {
+        destination: dest,
+        source: src,
+        ethertype: ethertype,
+    })
+}
+
+fn main() {
+    let frame_data: Vec&lt;u8&gt; = vec![
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, // Destination MAC
+        0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, // Source MAC
+        0x08, 0x00,                         // EtherType (0x0800 = IPv4)
+        0x45, 0x00, 0x00, 0x28, 0x12, 0x34  // Start of IP header (payload)
+    ];
+
+    // We use `match` to safely handle both the success (Ok) and failure (Err) cases.
+    match parse_ethernet_header(&frame_data) {
+        Ok(header) => {
+            println!("Successfully parsed header:");
+            println!("  Destination: {:02x?}", header.destination);
+            println!("  Source: {:02x?}", header.source);
+            println!("  EtherType: 0x{:04x}", header.ethertype);
+        }
+        Err(e) => {
+            eprintln!("Error parsing frame: {}", e);
+        }
+    }
+}</code></pre></div></div></section>
+                <section id="ch6" class="scroll-mt-20"><h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">Chapter 6: Next Steps into Embedded</h2><div class="prose max-w-none text-gray-700 space-y-4"><p>You now possess the foundational Rust knowledge to dive into the embedded world. Here are the key concepts you'll encounter next:</p><ul class="list-disc list-inside space-y-2"><li><strong><code>#![no_std]</code></strong>: This attribute at the top of your `main.rs` file tells the compiler you won't be using the standard library (which assumes an OS). This is essential for microcontrollers. You lose types like `String` and `Vec` that need heap allocation, but gain precise, low-level control.</li><li><strong>Hardware Abstraction Layer (HAL) Crates</strong>: These crates provide a high-level, safe API to control the microcontroller's hardware (like GPIO pins, I2C, SPI). For your ESP32, you'd use `esp32-hal`. For the Pico, `rp-pico-hal`. They abstract away the complex register manipulation.</li></ul><p>Your first project will be "blinky"—making an LED blink. Here is what that looks like conceptually for a Raspberry Pi Pico:</p><div class="code-block"><pre><code class="language-rust">#![no_std]
+#![no_main]
+
+// The entry point for our program
+use cortex_m_rt::entry;
+// The HAL for the rp2040 chip on the Pico
+use rp_pico::hal::{pac, sio::Sio};
+// Panic handler
+use panic_halt as _;
+
+#[entry]
+fn main() -> ! {
+    // Grab our singleton objects for the peripherals
+    let mut pac = pac::Peripherals::take().unwrap();
+    let sio = Sio::new(pac.SIO);
+
+    // Set the pins to functions sio (software I/O) and initialize them
+    let pins = rp_pico::Pins::new(
+        pac.IO_BANK0,
+        pac.PADS_BANK0,
+        sio.gpio_bank0,
+        &mut pac.RESETS,
+    );
+
+    // Get the onboard LED pin and configure it as a push-pull output
+    let mut led_pin = pins.led.into_push_pull_output();
+
+    loop {
+        led_pin.set_high().unwrap();
+        // A simple delay loop
+        cortex_m::asm::delay(200_000_000);
+        led_pin.set_low().unwrap();
+        cortex_m::asm::delay(200_000_000);
+    }
+}</code></pre></div><p class="font-semibold mt-8 text-lg">Recommended Resources:</p><ul class="list-disc list-inside space-y-1"><li><a href="https://docs.rust-embedded.org/book/" target="_blank" class="text-blue-600 hover:underline">The Embedded Rust Book</a> - The official guide.</li><li><a href="https://github.com/rust-embedded/awesome-embedded-rust" target="_blank" class="text-blue-600 hover:underline">Awesome Embedded Rust</a> - A curated list of resources.</li></ul></div></section>
+            </article>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const openIcon = mobileMenuButton.querySelector('svg.block');
+            const closeIcon = mobileMenuButton.querySelector('svg.hidden');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                openIcon.classList.toggle('hidden');
+                closeIcon.classList.toggle('hidden');
+            });
+            document.querySelectorAll('.nav-link-mobile').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    openIcon.classList.remove('hidden');
+                    closeIcon.classList.add('hidden');
+                });
+            });
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+            const moveBtn = document.getElementById('moveBtn');
+            const owner1 = document.getElementById('owner1');
+            const owner2 = document.getElementById('owner2');
+            const moveStatus = document.getElementById('moveStatus');
+            let isMoved = false;
+            moveBtn.addEventListener('click', () => {
+                if (!isMoved) {
+                    owner1.classList.remove('bg-blue-500');
+                    owner1.classList.add('bg-gray-200', 'text-gray-500', 'italic');
+                    owner1.innerText = 'Moved!';
+                    owner2.classList.remove('bg-gray-200', 'text-gray-500', 'italic');
+                    owner2.classList.add('bg-blue-500', 'text-white');
+                    owner2.innerText = '"router_config"';
+                    moveStatus.innerText = 's1 is no longer valid. Ownership moved to s2.';
+                    moveBtn.innerText = 'Reset';
+                    isMoved = true;
+                } else {
+                    owner2.classList.remove('bg-blue-500');
+                    owner2.classList.add('bg-gray-200', 'text-gray-500', 'italic');
+                    owner2.innerText = 'Empty';
+                    owner1.classList.remove('bg-gray-200', 'text-gray-500', 'italic');
+                    owner1.classList.add('bg-blue-500', 'text-white');
+                    owner1.innerText = '"router_config"';
+                    moveStatus.innerText = '';
+                    moveBtn.innerText = 'Run `let s2 = s1;`';
+                    isMoved = false;
+                }
+            });
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { rootMargin: "-20% 0px -80% 0px" });
+            sections.forEach(section => { observer.observe(section); });
+        });
+    </script>
+</body>
+</html>

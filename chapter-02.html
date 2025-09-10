@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 2: The Language</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .nav-link.active { color: #3b82f6; border-bottom-width: 2px; border-color: #3b82f6; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .exercise { background-color: #fefce8; border-left: 4px solid #facc15; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .concept-box { background-color: #f0f9ff; border-left: 4px solid #38bdf8; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        details { background-color: #f3f4f6; border-radius: 0.5rem; padding: 1rem; }
+        summary { font-weight: 600; cursor: pointer; color: #1f2937; }
+        .toc { background-color: #eef2ff; border: 1px solid #c7d2fe; border-radius: 0.5rem; padding: 1.5rem; }
+        .toc-title { font-family: 'Lora', serif; font-size: 1.5rem; font-weight: bold; color: #312e81; }
+        .toc-list { list-style-type: decimal; padding-left: 1.5rem; }
+        .toc-list a { color: #4338ca; text-decoration: none; }
+        .toc-list a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center"><span class="font-bold text-xl text-gray-700">Rust Masterclass: Chapter 2</span></div>
+            <div class="hidden md:block"><nav id="desktop-nav" class="ml-10 flex items-baseline space-x-4">
+                <a href="#toc" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Contents</a>
+                <a href="#intro" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Intro</a>
+                <a href="#variables" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Variables</a>
+                <a href="#types" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Data Types</a>
+                <a href="#functions" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Functions</a>
+                <a href="#control-flow" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Control Flow</a>
+                <a href="#next" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Next Chapter</a>
+            </nav></div>
+            <div class="-mr-2 flex md:hidden"><button id="mobile-menu-button" class="bg-gray-100 p-2 rounded-md text-gray-500"><svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg><svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div>
+        </div></div>
+        <div class="md-hidden hidden" id="mobile-menu"><div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+             <a href="#toc" class="nav-link-mobile block p-2 rounded-md">Contents</a><a href="#intro" class="nav-link-mobile block p-2 rounded-md">Intro</a><a href="#variables" class="nav-link-mobile block p-2 rounded-md">Variables</a><a href="#types" class="nav-link-mobile block p-2 rounded-md">Data Types</a><a href="#functions" class="nav-link-mobile block p-2 rounded-md">Functions</a><a href="#control-flow" class="nav-link-mobile block p-2 rounded-md">Control Flow</a><a href="#next" class="nav-link-mobile block p-2 rounded-md">Next Chapter</a>
+        </div></div>
+    </header>
+
+    <main class="pt-24"><div class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 2: The Language</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">From Bits to Blueprints: Speaking Rust</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">In Chapter 1, we learned about the workshop and the tools. Now, we learn the craft itself. This chapter is a deep dive into the fundamental vocabulary and grammar of the Rust language. We will build the bedrock of knowledge required to construct anything, from a simple command-line tool to the avionics of a modern jet.</p>
+        </header>
+        
+        <div id="toc" class="toc scroll-mt-20">
+            <h2 class="toc-title">In This Chapter</h2>
+            <ol class="toc-list mt-4 space-y-2">
+                <li><a href="#sub-1"><strong>The Aerospace Question:</strong> Why You Don't Need C for Safety-Critical Systems</a></li>
+                <li><a href="#sub-2"><strong>Variables and Mutability:</strong> The Safety Latch</a></li>
+                <li><a href="#sub-3"><strong>Shadowing:</strong> Re-binding a Name</a></li>
+                <li><a href="#sub-4"><strong>Data Types I:</strong> Scalar Types (The Atoms of Data)</a></li>
+                <li><a href="#sub-5"><strong>Data Types II:</strong> Compound Types (Building Molecules)</a></li>
+                <li><a href="#sub-6"><strong>Functions:</strong> The Verbs of Your Program</a></li>
+                <li><a href="#sub-7"><strong>Comments:</strong> Speaking to Humans</a></li>
+                <li><a href="#sub-8"><strong>Control Flow:</strong> Making Decisions with `if`, `else`, and Loops</a></li>
+                <li><a href="#sub-9"><strong>Expressions vs. Statements:</strong> A Subtle, Powerful Idea</a></li>
+                <li><a href="#sub-10"><strong>Chapter 2 Project:</strong> ARINC 429 Word Decoder</a></li>
+            </ol>
+        </div>
+
+        <article class="space-y-20 mt-16">
+            <section id="sub-1" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">1. The Aerospace Question</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Before we touch the language, let's address your excellent question. Can you work in aerospace building avionics without a deep background in C/C++?</p>
+                    <p>The answer is a resounding <strong>yes, and Rust is your ticket in</strong>. Here's why:</p>
+                    <p>The aerospace industry is pathologically obsessed with safety, for good reason. Historically, C was used because it was "close to the metal." But C is notoriously unsafe. A single mistake with memory (a "buffer overflow" or "null pointer dereference") can lead to catastrophic failure. To combat this, the industry created extremely rigorous, expensive, and slow development standards like DO-178C.</p>
+                    <p>Rust enters this picture as a game-changer. It offers the same low-level performance and control as C, but with a compiler that <strong>mathematically proves the absence of entire classes of memory errors before the program is ever run</strong>. A significant portion of the safety checks that the DO-178C standard demands are, in effect, performed for free by the Rust compiler on every build. This means you can write code that is provably safer, faster.</p>
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">What About ARINC 429?</h3>
+                    <p>ARINC 429 is a perfect example. It's a simple, robust data bus standard where information is sent in 32-bit "words." Each part of that 32-bit word has a specific meaning: the parity bit, the label, the source/destination identifier, and the actual data. </p>
+                    <p>In C, you would use bitmasks and bit-shifting on a 32-bit integer to manually extract this data—an error-prone process. In Rust, you can use the built-in integer type `u32` (an unsigned 32-bit integer) and create safe, high-level abstractions to decode these words. The compiler guarantees that your `u32` is always exactly 32 bits, and its type system lets you build decoders that cannot misinterpret the data. You are not skipping the necessary knowledge; you are using a superior tool that prevents common, dangerous mistakes from happening in the first place.</p>
+                </div>
+            </section>
+
+            <section id="sub-2" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">2. Variables and Mutability: The Safety Latch</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>In Python, you can write `x = 5` and later `x = "hello"`. This flexibility is convenient but can be a source of bugs. Rust makes a very different choice.</p>
+                    <p>In Rust, variables are <strong>immutable by default</strong>. Think of this as a safety latch on a tool. You cannot change a variable's value unless you explicitly say it's okay to do so. This prevents accidental changes in large codebases.</p>
+                    <p>We declare a variable with the `let` keyword.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let router_model = "Cisco ASR 9000"; // This is immutable.
+    println!("The router model is: {}", router_model);
+
+    // The following line would cause a COMPILE ERROR!
+    // router_model = "Juniper MX204";
+}</code></pre></div>
+                    <p>To make a variable mutable, we use the `mut` keyword. This is you consciously releasing the safety latch.</p>
+                     <div class="code-block"><pre><code class="language-rust">fn main() {
+    let mut packet_count = 0; // This is mutable.
+    println!("Initial packet count: {}", packet_count);
+
+    packet_count = 120; // This is allowed.
+    println!("New packet count: {}", packet_count);
+}</code></pre></div>
+                    <p>This "immutable by default" philosophy is a core part of Rust. It encourages you to think about which parts of your program need to change and which should remain constant, leading to more predictable and reliable code.</p>
+                </div>
+            </section>
+            
+            <section id="sub-3" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">3. Shadowing: Re-binding a Name</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>There's another concept that looks like mutability but is different: <strong>shadowing</strong>. You can declare a new variable with the same name as a previous variable. This new variable "shadows" the old one.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let ip_address = "192.168.1.1"; // ip_address is a string slice
+
+    // Some code here...
+
+    // We can "shadow" the previous ip_address with a new variable.
+    // This is useful if we want to change the type.
+    let ip_address = ip_address.split('.').count(); // Now, ip_address is an integer (4)
+
+    println!("The number of octets is: {}", ip_address);
+}</code></pre></div>
+                    <p>The key difference is that with shadowing, we are creating a <strong>brand new variable</strong>. The old `ip_address` (the string) is gone, and the name `ip_address` is now bound to the new variable (the integer). With `mut`, we are changing the value inside the same variable. Shadowing is useful when you want to perform a transformation on a value but don't need the original value anymore.</p>
+                </div>
+            </section>
+            
+            <section id="sub-4" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">4. Data Types I: Scalar Types (The Atoms of Data)</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Rust is a <strong>statically typed</strong> language, meaning it must know the type of every variable at compile time. Scalar types represent a single value. There are four primary scalar types.</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Integers:</strong> Rust has signed (`i`) and unsigned (`u`) integers of specific sizes: 8, 16, 32, 64, and 128 bits. The size matters in embedded systems! An IPv4 octet (0-255) fits perfectly in a `u8`. A TCP port number (0-65535) fits perfectly in a `u16`. An ARINC 429 word is a `u32`. You choose the smallest size that fits your data to be memory-efficient.</li>
+                        <li><strong>Floating-Point Numbers:</strong> `f32` (single-precision) and `f64` (double-precision). Used for values with decimal points, like sensor readings.</li>
+                        <li><strong>Booleans:</strong> The `bool` type has two possible values: `true` or `false`.</li>
+                        <li><strong>Characters:</strong> The `char` type represents a single Unicode character. It is specified with single quotes, like `'A'`.</li>
+                    </ul>
+                     <div class="code-block"><pre><code class="language-rust">fn main() {
+    let port: u16 = 8080; // Explicitly typed as an unsigned 16-bit integer
+    let temperature = 22.5; // Defaults to f64
+    let is_up: bool = true;  // Explicitly typed
+    let interface_id = 'A'; // This is a char
+}</code></pre></div>
+                </div>
+            </section>
+            
+            <section id="sub-5" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">5. Data Types II: Compound Types (Building Molecules)</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Compound types can group multiple values into one type. The two main ones are tuples and arrays.</p>
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">The Tuple</h3>
+                    <p>A tuple is a general-purpose way of grouping together some number of other values with a variety of types. Think of it like a simple Python tuple.</p>
+                     <div class="code-block"><pre><code class="language-rust">fn main() {
+    // A tuple holding an IP address string and a port number
+    let server_config: (&str, u16) = ("10.0.0.1", 443);
+
+    // We can access tuple elements by index
+    let ip = server_config.0;
+    let port = server_config.1;
+
+    println!("Connecting to {}:{}", ip, port);
+}</code></pre></div>
+                    <h3 class="text-2xl font-bold text-gray-700 pt-6">The Array</h3>
+                    <p>An array is a collection of multiple values of the <strong>same type</strong>. Unlike Python lists, arrays in Rust have a fixed length.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    // A MAC address can be represented as an array of 6 bytes (u8)
+    let mac_address: [u8; 6] = [0x00, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E];
+
+    // Access by index
+    println!("The first byte of the MAC is: {}", mac_address[0]);
+}</code></pre></div>
+                    <p>Arrays are useful when you want your data on the stack and when you are sure of the number of elements you will have.</p>
+                </div>
+            </section>
+            
+            <section id="sub-6" class="scroll-mt-20">
+                 <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">6. Functions: The Verbs of Your Program</h2>
+                 <div class="prose max-w-none text-gray-700 space-y-4">
+                     <p>Functions are the workhorses of Rust. We declare them with `fn`. Crucially, you must declare the type of each function parameter.</p>
+                     <div class="code-block"><pre><code class="language-rust">fn main() {
+    print_status("R1", 1);
+    print_status("R2", 2);
+}
+
+// This function takes a string slice and a u8, and returns nothing.
+fn print_status(router_name: &str, interface_num: u8) {
+    println!("Status for {} interface {}: UP", router_name, interface_num);
+}</code></pre></div>
+                     <h4>Functions with Return Values</h4>
+                     <p>You can also return values from functions. You declare the return type after an arrow `->`.</p>
+                     <div class="code-block"><pre><code class="language-rust">fn main() {
+    let config_valid = is_config_valid(2048);
+    println!("Is the config valid? {}", config_valid);
+}
+
+// This function takes a u32 and returns a bool.
+fn is_config_valid(mtu: u32) -> bool {
+    // In Rust, if the last line of a function is an expression (no semicolon),
+    // it is automatically returned.
+    mtu > 1500
+}</code></pre></div>
+                </div>
+            </section>
+
+            <section id="sub-7" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">7. Comments: Speaking to Humans</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Code tells you how, comments tell you why. Rust has a few types of comments.</p>
+                     <div class="code-block"><pre><code class="language-rust">// This is a standard, single-line comment.
+
+/*
+ * This is a multi-line, block comment,
+ * often used for longer explanations.
+ */
+
+ /// This is a documentation comment. It supports Markdown!
+ /// It's used to generate documentation for the item that follows it.
+ fn my_documented_function() {
+     // ...
+ }</code></pre></div>
+                </div>
+            </section>
+
+            <section id="sub-8" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">8. Control Flow: Making Decisions</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Like any language, Rust has ways to control the flow of execution. The `if` expression is the most basic.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let port = 443;
+    if port == 443 {
+        println!("This is a secure connection.");
+    } else if port == 80 {
+        println!("This is an insecure connection.");
+    } else {
+        println!("This is a custom port.");
+    }
+}</code></pre></div>
+                    <h4>Looping</h4>
+                    <p>Rust has three kinds of loops: `loop`, `while`, and `for`.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    // `for` is the most common. It's great for iterating over collections.
+    let mac_address: [u8; 3] = [0xAA, 0xBB, 0xCC];
+    for byte in mac_address {
+        println!("Byte: {}", byte);
+    }
+
+    // `while` is used when the condition is based on some changing state.
+    let mut countdown = 3;
+    while countdown != 0 {
+        println!("{}...", countdown);
+        countdown -= 1;
+    }
+    println!("LIFTOFF!!!");
+}</code></pre></div>
+                </div>
+            </section>
+            
+            <section id="sub-9" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">9. Expressions vs. Statements: A Subtle, Powerful Idea</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>This is a key concept that separates Rust from many other languages.
+                    <ul>
+                        <li><strong>Statements</strong> are instructions that perform some action but do not return a value. `let x = 5;` is a statement.</li>
+                        <li><strong>Expressions</strong> evaluate to a resulting value. `5 + 6` is an expression that evaluates to `11`.</li>
+                    </ul>
+                    <p>In Rust, many things are expressions, including `if` blocks! This allows for very clean code.</p>
+                    <div class="code-block"><pre><code class="language-rust">fn main() {
+    let port = 8080;
+    
+    // The `if` block is an expression that evaluates to a value.
+    // That value is then bound to `connection_type`.
+    let connection_type = if port == 443 {
+        "SECURE"
+    } else {
+        "INSECURE"
+    }; // The semicolon here ends the `let` statement.
+
+    println!("The connection is {}.", connection_type);
+}</code></pre></div>
+                </div>
+            </section>
+            
+            <section id="sub-10" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">10. Chapter 2 Project: ARINC 429 Word Decoder</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Let's use our new knowledge of functions, types, and control flow to build a utility that decodes a raw 32-bit ARINC 429 word into its components.</p>
+                    <div class="exercise">
+                        <h4 class="font-bold text-lg text-yellow-900">Your Task: Build the Decoder</h4>
+                        <ol class="list-decimal list-inside mt-3 space-y-2 text-yellow-800">
+                            <li>Create a new binary crate: `cargo new arinc_decoder`.</li>
+                            <li>Replace `src/main.rs` with the final code below. Read the comments carefully to see how we use bitwise operations and functions to isolate parts of the `u32` word.</li>
+                            <li>Run the project with `cargo run`.</li>
+                        </ol>
+                        <h4>Final Code: `src/main.rs`</h4>
+                        <div class="code-block"><pre><code class="language-rust">fn main() {
+    // A sample ARINC 429 word (32 bits) representing some data.
+    let word: u32 = 0b1_00010001_01_1010110011010101_10001000;
+    // P | SSM | DATA | SDI | LABEL
+    // 1 bit | 2 bits | 19 bits | 2 bits | 8 bits
+
+    println!("Decoding ARINC Word: {:b}", word);
+    println!("{:-<40}", "");
+
+    // Use our functions to decode each part of the word.
+    let label = get_label(word);
+    let data = get_data(word);
+    let ssm = get_ssm(word);
+    
+    // We can use an `if` expression to convert the SSM code to a meaningful string.
+    let ssm_meaning = if ssm == 0b11 {
+        "Normal Operation"
+    } else if ssm == 0b01 {
+        "Test"
+    } else {
+        "Failure Warning"
+    };
+
+    println!("Label (Equipment ID): Octal {:o}", label);
+    println!("Data: Hex 0x{:X}", data);
+    println!("Sign/Status Matrix (SSM): {} ({:b})", ssm_meaning, ssm);
+}
+
+/// Extracts the 8-bit label from the word.
+/// The label is in bits 0-7.
+fn get_label(word: u32) -> u8 {
+    // We use a bitmask to keep only the first 8 bits, then cast to u8.
+    (word & 0xFF) as u8
+}
+
+/// Extracts the 19-bit data field from the word.
+/// The data is in bits 10-28.
+fn get_data(word: u32) -> u32 {
+    // First, shift the word right by 10 bits.
+    // Then, mask to keep only the 19 bits of data.
+    (word >> 10) & 0x7FFFF
+}
+
+/// Extracts the 2-bit Sign/Status Matrix from the word.
+/// The SSM is in bits 29-30.
+fn get_ssm(word: u32) -> u8 {
+    // Shift right by 29 bits, mask, and cast.
+    ((word >> 29) & 0b11) as u8
+}
+</code></pre></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="next" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">Final Thoughts and a Preamble to Chapter 3</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>You have just absorbed the core grammar of the Rust language. You've learned about variables, the fundamental types used to represent data, and the control flow that brings them to life. You've seen how these simple atoms can be composed into a practical tool for an industry like aerospace.</p>
+                    <p>You now have the vocabulary. But you're likely feeling a tension. We've used simple types like `u32` and `&str`, but what about more complex, dynamic data like in Python's lists and dictionaries? How does memory for that work if there's no garbage collector?</p>
+                    <p>That is the perfect question to lead us into the next chapter.</p>
+                    <p><strong>In Chapter 3, "The Soul of the Machine: Ownership,"</strong> we will learn Rust's superpower. We will confront the concepts of the Stack, the Heap, and the three simple-sounding but profound rules of Ownership that allow Rust to guarantee memory safety without a garbage collector. This is the most important chapter in the book. It is the idea that sets Rust apart from every other language. Prepare to have your understanding of programming fundamentally upgraded.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+            document.querySelectorAll('.nav-link-mobile').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.add('hidden'); }); });
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { rootMargin: "-20% 0px -80% 0px" });
+            sections.forEach(section => { observer.observe(section); });
+        });
+    </script>
+</body>
+</html>
