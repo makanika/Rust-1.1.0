@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 5.1: The Live Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .deep-dive { background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #312e81; }
+        .analogy-box { background-color: #f0f9ff; border: 2px dashed #7dd3fc; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .analogy-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #0c4a6e; }
+        .component-box { border: 1px solid #d1d5db; border-radius: 0.5rem; margin-top: 1rem; }
+        .component-header { background-color: #f3f4f6; padding: 0.75rem 1.25rem; border-bottom: 1px solid #d1d5db; font-weight: 600; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;}
+        .component-body { padding: 1.25rem; }
+        .battery-level { transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <main class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 5.1: The Live System</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">The Three-Tier System: Rust, Python, and the Browser</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">This is the culmination of your first week. We will build a complete, end-to-end, real-time monitoring system. This is not a toy. This is a professional architecture used in production systems worldwide. We will combine the strengths of three different technology stacks to create something greater than the sum of its parts.</p>
+        </header>
+
+        <article class="space-y-20">
+            <section id="architecture" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">1. The Blueprint: Our System Architecture</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <div class="analogy-box">
+                        <h3 class="analogy-title">The NOC Analogy</h3>
+                        <ul>
+                            <li><strong>The Rust Probe:</strong> This is our on-site sensor. It's a highly efficient, low-level agent running directly on the hardware. Its only job is to collect raw data and send it to the central server.</li>
+                            <li><strong>The FastAPI Server:</strong> This is our central Data Ingestion Hub. It listens for reports from all our sensors. It's also a Distribution Center that manages a list of all active monitoring screens. When a new report comes in, it immediately pushes the update to all screens.</li>
+                            <li><strong>The HTML Dashboard:</strong> This is the screen in the Network Operations Center (NOC). It maintains a constant, open connection to the Distribution Center, waiting for live updates.</li>
+                        </ul>
+                    </div>
+                    <p>The data will flow like this: </p>
+                    <ol>
+                        <li>Our **Rust probe** will read your MacBook's battery status.</li>
+                        <li>It will send this data as a JSON payload via an **HTTP POST** request to our Python server.</li>
+                        <li>The **FastAPI server** will receive the data.</li>
+                        <li>It will immediately forward this data to all connected web browsers using a **WebSocket**.</li>
+                        <li>Our **HTML/JavaScript dashboard** will receive the data and update the display in real time.</li>
+                    </ol>
+                </div>
+            </section>
+            
+            <section id="components" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">2. The Components: Building Our System</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Here are the complete code listings for all three parts of our system.</p>
+
+                    <div class="component-box">
+                        <div class="component-header">Component 1: The Rust Hardware Reporter</div>
+                        <div class="component-body">
+                            <p><strong>Goal:</strong> Read hardware status and send it as JSON.</p>
+                            <p><strong>Setup:</strong> Create a new project (`cargo new hardware_reporter`) and add these dependencies to `Cargo.toml`.</p>
+                            <div class="code-block"><pre><code class="language-toml">[dependencies]
+battery = "0.9"
+serde = { version = "1.0", features = ["derive"] }
+reqwest = { version = "0.12", features = ["blocking", "json"] }</code></pre></div>
+                            <h4 class="font-bold text-lg mt-4 mb-2">Code: `src/main.rs`</h4>
+                            <div class="code-block"><pre><code class="language-rust">use serde::Serialize;
+
+// A blueprint for our report. `Serialize` allows this to be converted to JSON.
+#[derive(Serialize)]
+struct BatteryReport {
+    vendor: String,
+    model: String,
+    state: String,
+    percentage: f32,
+    rate_watts: f32,
+    time_to_full_secs: Option<u64>,
+    time_to_empty_secs: Option<u64>,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("--- Rust Hardware Reporter Initializing ---");
+    let manager = battery::Manager::new()?;
+    
+    if let Some(Ok(battery)) = manager.batteries()?.next() {
+        let state_str = match battery.state() {
+            battery::State::Charging => "Charging".to_string(),
+            battery::State::Discharging => "Discharging".to_string(),
+            battery::State::Full => "Full".to_string(),
+            _ => "Unknown".to_string(),
+        };
+
+        let report = BatteryReport {
+            vendor: battery.vendor().unwrap_or("N/A").to_string(),
+            model: battery.model().unwrap_or("N/A").to_string(),
+            state: state_str,
+            percentage: battery.state_of_charge().into(),
+            rate_watts: battery.energy_rate().into(),
+            time_to_full_secs: battery.time_to_full().map(|d| d.get::<battery::units::time::second>()),
+            time_to_empty_secs: battery.time_to_empty().map(|d| d.get::<battery::units::time::second>()),
+        };
+        
+        println!("Probe successful. Sending report to server...");
+        let client = reqwest::blocking::Client::new();
+        let res = client.post("http://127.0.0.1:8000/report").json(&report).send()?;
+        println!("Server response: {}", res.status());
+    } else {
+        println!("Could not find any batteries on this system.");
+    }
+
+    Ok(())
+}
+</code></pre></div>
+                        </div>
+                    </div>
+
+                    <div class="component-box">
+                        <div class="component-header">Component 2: The FastAPI & WebSocket Hub</div>
+                        <div class="component-body">
+                             <p><strong>Goal:</strong> Receive reports via HTTP and broadcast them via WebSockets.</p>
+                            <p><strong>Setup:</strong> Save this code as `server.py` and run `pip install fastapi uvicorn websockets python-multipart`.</p>
+                            <h4 class="font-bold text-lg mt-4 mb-2">Code: `server.py`</h4>
+                            <div class="code-block"><pre><code class="language-python">
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional, List
+import json
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
+    allow_methods=["*"], allow_headers=["*"],
+)
+
+class BatteryReport(BaseModel):
+    vendor: str
+    model: str
+    state: str
+    percentage: float
+    rate_watts: float
+    time_to_full_secs: Optional[int] = None
+    time_to_empty_secs: Optional[int] = None
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+manager = ConnectionManager()
+
+@app.post("/report")
+async def receive_report(report: BatteryReport):
+    print(f"Received report: State is {report.state}")
+    await manager.broadcast(report.model_dump_json())
+    return {"status": "Report broadcasted"}
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+</code></pre></div>
+                        </div>
+                    </div>
+
+                    <div class="component-box">
+                        <div class="component-header">Component 3: The Live HTML Dashboard</div>
+                        <div class="component-body">
+                             <p><strong>Goal:</strong> Connect to the WebSocket and display live data.</p>
+                            <p><strong>Setup:</strong> Save this code as `dashboard.html`.</p>
+                            <h4 class="font-bold text-lg mt-4 mb-2">Code: `dashboard.html`</h4>
+                            <div class="code-block"><pre><code class="language-html">
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Live Hardware Dashboard&lt;/title&gt;
+    &lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;
+    &lt;link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet"&gt;
+    &lt;style&gt;
+        body { font-family: 'Source Sans 3', sans-serif; }
+        .battery-level { transition: width 0.5s ease-in-out; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class="bg-gray-900 text-white flex items-center justify-center min-h-screen"&gt;
+    &lt;div class="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6"&gt;
+        &lt;div&gt;
+            &lt;h1 class="text-3xl font-bold text-center text-cyan-400"&gt;Live MacBook Power Status&lt;/h1&gt;
+            &lt;p id="connection-status" class="text-center text-gray-500"&gt;Connecting to server...&lt;/p&gt;
+        &lt;/div&gt;
+        
+        &lt;div id="dashboard" class="space-y-4"&gt;
+            &lt;div&gt;
+                &lt;div class="flex justify-between mb-1"&gt;
+                    &lt;span class="text-base font-medium text-gray-300"&gt;Charge Level&lt;/span&gt;
+                    &lt;span id="percentage" class="text-sm font-medium text-cyan-400"&gt;-&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class="w-full bg-gray-700 rounded-full h-4"&gt;
+                    &lt;div id="battery-level" class="bg-cyan-500 h-4 rounded-full battery-level" style="width: 0%"&gt;&lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class="grid grid-cols-2 gap-4 text-center"&gt;
+                &lt;div class="bg-gray-700 p-4 rounded-lg"&gt;&lt;p class="text-sm text-gray-400"&gt;Status&lt;/p&gt;&lt;p id="state" class="text-2xl font-bold"&gt;-&lt;/p&gt;&lt;/div&gt;
+                &lt;div class="bg-gray-700 p-4 rounded-lg"&gt;&lt;p class="text-sm text-gray-400"&gt;Rate&lt;/p&gt;&lt;p id="rate" class="text-2xl font-bold"&gt;-&lt;/p&gt;&lt;/div&gt;
+            &lt;/div&gt;
+             &lt;div class="bg-gray-700 p-4 rounded-lg text-center"&gt;&lt;p class="text-sm text-gray-400"&gt;Time Estimate&lt;/p&gt;&lt;p id="time-estimate" class="text-2xl font-bold"&gt;-&lt;/p&gt;&lt;/div&gt;
+             &lt;div class="text-xs text-gray-500 text-center pt-4"&gt;&lt;p id="details"&gt;Awaiting first report...&lt;/p&gt;&lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        const statusEl = document.getElementById('connection-status');
+        const percentageEl = document.getElementById('percentage');
+        const batteryLevelEl = document.getElementById('battery-level');
+        const stateEl = document.getElementById('state');
+        const rateEl = document.getElementById('rate');
+        const timeEstimateEl = document.getElementById('time-estimate');
+        const detailsEl = document.getElementById('details');
+
+        function formatSeconds(seconds) {
+            if (seconds === null || seconds < 1) return 'N/A';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            return `~${h}h ${m}m`;
+        }
+
+        function connect() {
+            const socket = new WebSocket("ws://127.0.0.1:8000/ws");
+
+            socket.onopen = () => {
+                statusEl.textContent = "Connected to Live Feed";
+                statusEl.classList.remove('text-gray-500');
+                statusEl.classList.add('text-green-400');
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                const percent = data.percentage * 100;
+                percentageEl.textContent = `${percent.toFixed(1)}%`;
+                batteryLevelEl.style.width = `${percent}%`;
+                
+                let stateEmoji = '⚡️';
+                if (data.state === 'Discharging') stateEmoji = '🔋';
+                if (data.state === 'Full') stateEmoji = '🔌';
+                stateEl.textContent = `${data.state} ${stateEmoji}`;
+                
+                rateEl.textContent = `${data.rate_watts.toFixed(2)} W`;
+                detailsEl.textContent = `Vendor: ${data.vendor} | Model: ${data.model}`;
+
+                let timeText = 'Fully Charged';
+                if (data.state === 'Charging') {
+                    timeText = `${formatSeconds(data.time_to_full_secs)} to full`;
+                } else if (data.state === 'Discharging') {
+                    timeText = `${formatSeconds(data.time_to_empty_secs)} to empty`;
+                }
+                timeEstimateEl.textContent = timeText;
+            };
+
+            socket.onclose = () => {
+                statusEl.textContent = "Connection Lost. Retrying...";
+                statusEl.classList.add('text-gray-500');
+                statusEl.classList.remove('text-green-400');
+                setTimeout(connect, 3000); // Try to reconnect after 3 seconds
+            };
+            
+            socket.onerror = (error) => {
+                console.error("WebSocket Error:", error);
+                socket.close();
+            };
+        }
+
+        connect(); // Initial connection
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="next" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">3. The Orchestration: Bringing Your System Online</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>You have the three components. Here is how you bring your full monitoring system to life:</p>
+                    <ol>
+                        <li><strong>Terminal 1: Start the Backend.</strong> Navigate to where you saved `server.py` and run:
+                            <div class="code-block"><pre><code class="language-bash">uvicorn server:app --reload</code></pre></div>
+                            Your Python server is now listening for reports and dashboard connections.
+                        </li>
+                        <li><strong>Your Browser: Open the Dashboard.</strong> Open the `dashboard.html` file in your web browser. It will connect to the server and show "Connected to Live Feed".</li>
+                        <li><strong>Terminal 2: Run the Probe.</strong> Navigate to your Rust `hardware_reporter` project and run it:
+                            <div class="code-block"><pre><code class="language-bash">cargo run</code></pre></div>
+                        </li>
+                    </ol>
+                    <p>The moment you run the Rust program, you will see your web dashboard instantly update with the live battery status from your MacBook. Unplug your laptop, run the Rust probe again, and watch the dashboard change in real-time. You have just built a complete, cross-language, three-tier monitoring system. This is the power you have been learning all week, made real.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 5.1: Probing the MacBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .nav-link.active { color: #3b82f6; border-bottom-width: 2px; border-color: #3b82f6; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .exercise { background-color: #fefce8; border-left: 4px solid #facc15; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive { background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #312e81; }
+        .analogy-box { background-color: #f0f9ff; border: 2px dashed #7dd3fc; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .analogy-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #0c4a6e; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center"><span class="font-bold text-xl text-gray-700">Rust Masterclass: Chapter 5.1</span></div>
+        </div></div>
+    </header>
+
+    <main class="pt-24"><div class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 5.1: A Practical Example</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">Touching the Metal: Probing Your MacBook</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">Theory is the blueprint; execution is the machine. In this special chapter, we will build a Rust program that does not simulate a device, but interacts with the one you are using right now. We will write a hardware probe that queries the macOS system kernel for real-time information about your MacBook's power system. This is your first step into true systems programming.</p>
+        </header>
+
+        <article class="space-y-20">
+            <section id="why" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">1. The "Why": From Simulation to Reality</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Why is this possible? Because Rust is not a scripting language that lives in a sandbox. It is a systems language that compiles down to the same native machine code as C and C++. This gives it the ability to talk directly to the operating system's lowest-level interfaces.</p>
+                    <div class="analogy-box">
+                        <h3 class="analogy-title">Analogy: The Data Center API</h3>
+                        <p class="mt-2">
+                        Your data center has a management API. You can use a high-level Python script to ask it simple questions like "How many servers are online?". But what if you need to know the current fan speed of a specific blade server in Rack 42? For that, you need a tool that can speak the deep, complex language of the hardware management controller.
+                        </p>
+                        <p class="mt-2">
+                        macOS has a similar low-level "API" for its hardware called <strong>IOKit</strong>. It's the system that manages drivers and talks to physical devices. Writing code to interact with IOKit directly is complex. But because Rust has zero-cost abstractions and can talk to C libraries, the Rust community has built safe, easy-to-use "wrapper" crates that handle the complexity for us. We will use one of these crates to act as our translator.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="project" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">2. The Project: MacBook Power Probe</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Our mission is to build a command-line tool that inspects the state of your MacBook's battery and prints a detailed report. We will use a fantastic library crate called `battery` to do the heavy lifting.</p>
+                    <div class="exercise">
+                        <h4 class="font-bold text-lg text-yellow-900">Your Task: Build the Power Probe</h4>
+                        <ol class="list-decimal list-inside mt-3 space-y-2 text-yellow-800">
+                            <li><strong>Create a new binary crate:</strong>
+                                <div class="code-block"><pre><code class="language-bash">cargo new power_probe
+cd power_probe</code></pre></div>
+                            </li>
+                            <li><strong>Add the `battery` crate as a dependency:</strong>
+                                <div class="code-block"><pre><code class="language-bash">cargo add battery</code></pre></div>
+                            </li>
+                            <li><strong>Write the code:</strong> Replace the contents of `src/main.rs` with the code below. We will start simple and then build up to the full version.
+                                <div class="deep-dive">
+                                    <h3 class="deep-dive-title">The Logic, Unpacked</h3>
+                                    <ol>
+                                        <li>We ask the `battery` crate for a "manager". This is an object that knows how to find all the power sources in your system.</li>
+                                        <li>We ask the manager for a list of all batteries it can find. This might be one, or on some laptops, even more.</li>
+                                        <li>We loop through each battery found.</li>
+                                        <li>For each battery, we print its details. We use a `match` statement on the battery's `state` enum (just like we did with our `InterfaceStatus` enum!) to print a human-readable status.</li>
+                                        <li>We format the output to be clear and useful, converting units where necessary.</li>
+                                    </ol>
+                                </div>
+                            </li>
+                            <li><strong>Run the probe!</strong>
+                                <div class="code-block"><pre><code class="language-bash">cargo run</code></pre></div>
+                                The output you see is not a simulation. It is the real, live state of your hardware.
+                            </li>
+                        </ol>
+
+                        <h4 class="font-bold text-lg text-yellow-900 mt-8">Final Code: `src/main.rs`</h4>
+                        <div class="code-block"><pre><code class="language-rust">fn main() -> Result<(), battery::Error> {
+    // 1. Create a `Manager` that knows how to find system batteries.
+    //    The `?` at the end is for error handling, which we'll cover in Chapter 6.
+    //    It means "if this fails, stop the program and report the error."
+    let manager = battery::Manager::new()?;
+
+    // 2. Get an iterator over all batteries the manager can find.
+    //    The manager is the owner of the battery data. We are borrowing it.
+    let mut batteries = manager.batteries()?;
+
+    println!("--- MacBook Power Probe ---");
+
+    // 3. We use a `match` expression to handle the case where there might be no batteries.
+    match batteries.next() {
+        Some(Ok(battery)) => {
+            // If we found at least one battery, print its details.
+            println!("\n[Battery 0]");
+
+            // The `battery` object is a struct, just like our `NetworkInterface`!
+            // We can access its fields with dot notation.
+            println!("  Vendor:          {}", battery.vendor().unwrap_or("N/A"));
+            println!("  Model:           {}", battery.model().unwrap_or("N/A"));
+            
+            // The `state` is an enum, just like our `InterfaceStatus`.
+            // We use `match` to make the output user-friendly.
+            let state_str = match battery.state() {
+                battery::State::Charging => "Charging ⚡️",
+                battery::State::Discharging => "Discharging 🔋",
+                battery::State::Full => "Full 🔌",
+                battery::State::Empty => "Empty ❗️",
+                battery::State::Unknown => "Unknown ?",
+                _ => "Other",
+            };
+            println!("  State:           {}", state_str);
+            
+            // We can get detailed, real-time values.
+            let percentage = battery.state_of_charge() * 100.0;
+            println!("  Charge:          {:.2}%", percentage);
+
+            let energy_rate = battery.energy_rate();
+            println!("  Current Rate:    {:.2} W", energy_rate);
+            
+            // Let's provide a helpful time estimate.
+            match battery.state() {
+                battery::State::Charging => {
+                    println!("  Time to full:    {:?}", battery.time_to_full().unwrap_or_default());
+                },
+                battery::State::Discharging => {
+                    println!("  Time to empty:   {:?}", battery.time_to_empty().unwrap_or_default());
+                },
+                _ => (), // For other states, we don't print anything.
+            }
+        }
+        Some(Err(e)) => {
+            // If there was an error reading the battery, print it.
+            eprintln!("Error reading battery information: {}", e);
+        }
+        None => {
+            // If the manager found no batteries at all.
+            println!("No batteries found on this system.");
+        }
+    }
+
+    Ok(())
+}
+</code></pre></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="next" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">3. The Tangible Result and the Road Ahead</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Go ahead and try it. Run `cargo run`. Now, plug in your MagSafe charger and run it again. Unplug it and run it again. The output changes. You are not just running code; you are observing the physical state of your machine in real time. This is the power of systems programming. You have crossed the bridge from simulation to reality.</p>
+                    <p>This single example brings together everything you have learned:
+                        <ul>
+                            <li><strong>Cargo and Crates:</strong> You added an external crate to give you a safe hardware API.</li>
+                            <li><strong>Structs and Enums:</strong> The `battery` crate provides you with a `Battery` struct and a `State` enum, which you now know how to use.</li>
+                            <li><strong>Ownership and Borrowing:</strong> The `manager` owned the data, and you iterated over a borrow of it.</li>
+                            <li><strong>Control Flow:</strong> You used `match` to handle the different states and provide clean output.</li>
+                        </ul>
+                    </p>
+                    <p>You now have a real, working hardware utility. But it has limitations. It runs once and then exits. And what happens if you run it on a desktop Mac with no battery? Our code handles it, but the concept of "failure" is something we need to explore more deeply. In the world of hardware and networking, things fail all the time.</p>
+                    <p><strong>In Chapter 6, "Error Handling and the Elegance of `Result`,"</strong> we will formally learn about the `?` operator you saw in this code. We will master Rust's robust and elegant system for handling errors, a skill that is non-negotiable for anyone writing the kind of reliable systems that are expected in data centers and aviation.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.querySelector('#mobile-menu-button');
+            const mobileMenu = document.querySelector('#mobile-menu');
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+                document.querySelectorAll('.nav-link-mobile').forEach(link => { 
+                    link.addEventListener('click', () => { 
+                        mobileMenu.classList.add('hidden'); 
+                    }); 
+                });
+            }
+            
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            if (sections.length > 0 && navLinks.length > 0) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const id = entry.target.getAttribute('id');
+                            navLinks.forEach(link => {
+                                link.classList.remove('active');
+                                if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                            });
+                        }
+                    });
+                }, { rootMargin: "-20% 0px -80% 0px" });
+                sections.forEach(section => { observer.observe(section); });
+            }
+        });
+    </script>
+</body>
+</html>
+
