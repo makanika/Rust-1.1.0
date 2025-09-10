@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust Masterclass - Ch 2.1: The Language, Uncut</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Source Sans 3', sans-serif; background-color: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Lora', serif; }
+        pre code.hljs { font-family: 'Source Code Pro', monospace; }
+        .prose { font-size: 1.125rem; line-height: 1.75; }
+        .prose strong { color: #1e3a8a; }
+        .nav-link.active { color: #3b82f6; border-bottom-width: 2px; border-color: #3b82f6; }
+        .code-block { position: relative; }
+        .copy-btn { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #374151; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s, background-color 0.2s; border: 1px solid #4b5563; }
+        .copy-btn:hover { background-color: #4b5563; }
+        .code-block:hover .copy-btn { opacity: 1; }
+        .exercise { background-color: #fefce8; border-left: 4px solid #facc15; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive { background-color: #eef2ff; border-left: 4px solid #6366f1; padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0; }
+        .deep-dive-title { font-family: 'Lora', serif; font-size: 1.25rem; font-weight: bold; color: #312e81; }
+        details { background-color: #f3f4f6; border-radius: 0.5rem; padding: 1rem; }
+        summary { font-weight: 600; cursor: pointer; color: #1f2937; }
+        .memory-diagram { background-color: #1f2937; color: #f9fafb; font-family: 'Source Code Pro', monospace; padding: 1rem; border-radius: 0.5rem; }
+        .mem-address { color: #9ca3af; }
+        .mem-value { color: #a7f3d0; }
+        .toc { background-color: #eef2ff; border: 1px solid #c7d2fe; border-radius: 0.5rem; padding: 1.5rem; }
+        .toc-title { font-family: 'Lora', serif; font-size: 1.5rem; font-weight: bold; color: #312e81; }
+        .toc-list { list-style-type: decimal; padding-left: 1.5rem; }
+        .toc-list a { color: #4338ca; text-decoration: none; }
+        .toc-list a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="flex items-center justify-between h-16">
+            <div class="flex items-center"><span class="font-bold text-xl text-gray-700">Rust Masterclass: Chapter 2.1</span></div>
+            <div class="hidden md:block"><nav id="desktop-nav" class="ml-10 flex items-baseline space-x-4">
+                <a href="#toc" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Contents</a>
+                <a href="#sub-1" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Aerospace</a>
+                <a href="#sub-2" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Variables</a>
+                <a href="#sub-4" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Data Types</a>
+                <a href="#sub-6" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Functions</a>
+                <a href="#next" class="nav-link text-gray-600 hover:text-blue-500 px-3 py-2 text-sm font-medium">Next Chapter</a>
+            </nav></div>
+            <div class="-mr-2 flex md:hidden"><button id="mobile-menu-button" class="bg-gray-100 p-2 rounded-md text-gray-500"><svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg><svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div>
+        </div></div>
+        <div class="md:hidden hidden" id="mobile-menu"><div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+             <a href="#toc" class="nav-link-mobile block p-2 rounded-md">Contents</a><a href="#sub-1" class="nav-link-mobile block p-2 rounded-md">Aerospace</a><a href="#sub-2" class="nav-link-mobile block p-2 rounded-md">Variables</a><a href="#sub-4" class="nav-link-mobile block p-2 rounded-md">Data Types</a><a href="#sub-6" class="nav-link-mobile block p-2 rounded-md">Functions</a><a href="#next" class="nav-link-mobile block p-2 rounded-md">Next Chapter</a>
+        </div></div>
+    </header>
+
+    <main class="pt-24"><div class="max-w-4xl mx-auto p-6 md:p-10">
+        <header id="intro" class="mb-16">
+            <p class="text-blue-600 font-semibold">Chapter 2.1: The Language, Uncut</p>
+            <h1 class="text-5xl font-bold text-gray-800 mt-2">Speaking to the Machine: A Deep Dive</h1>
+            <p class="mt-4 text-xl text-gray-600 max-w-3xl">You're right. The last chapter was the overview; this is the detailed schematic. We will dissect every fundamental concept, explore how it translates into memory, and build the deep, core intuition required for professional systems programming.</p>
+        </header>
+        
+        <div id="toc" class="toc scroll-mt-20">
+            <h2 class="toc-title">Deep Dive Contents</h2>
+            <ol class="toc-list mt-4 space-y-2">
+                <li><a href="#sub-1"><strong>The Aerospace Question:</strong> Rust vs. MISRA C</a></li>
+                <li><a href="#sub-2"><strong>Variables and Mutability:</strong> Writing on the Stack</a></li>
+                <li><a href="#sub-3"><strong>Shadowing:</strong> A New Address, An Old Name</a></li>
+                <li><a href="#sub-4"><strong>Data Types I:</strong> A Contract on Size and Memory</a></li>
+                <li><a href="#sub-5"><strong>Data Types II:</strong> Contiguous Memory Layouts</a></li>
+                <li><a href="#sub-6"><strong>Functions:</strong> The Call Stack in Action</a></li>
+                <li><a href="#sub-7"><strong>Comments:</strong> Generating Professional Documentation</a></li>
+                <li><a href="#sub-8"><strong>Control Flow:</strong> How the CPU Follows the Path</a></li>
+                <li><a href="#sub-9"><strong>Expressions vs. Statements:</strong> Functional DNA</a></li>
+                <li><a href="#sub-10"><strong>Chapter Project:</strong> Building a Robust ARINC 429 Decoder</a></li>
+            </ol>
+        </div>
+
+        <article class="space-y-20 mt-16">
+            <section id="sub-1" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">1. Deep Dive: The Aerospace Question</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>To go deeper, let's compare Rust not just to C, but to the industry standard for safe C: <strong>MISRA C</strong>. MISRA C is a set of very strict rules that C programmers in automotive and aerospace must follow (e.g., "do not use dynamic memory allocation," "every pointer must be checked for null before use"). This process is manual, expensive, and relies on human discipline and external analysis tools.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">The Rust Advantage</h3>
+                        <p class="mt-2">The Rust compiler automates a huge portion of what the MISRA C standard tries to enforce manually.
+                        <ul>
+                            <li><strong>Null Pointers:</strong> The concept of a "null pointer" doesn't exist in safe Rust. Instead, Rust has the `Option` type, and the compiler <strong>forces</strong> you to handle the "no value" case. This eliminates an entire category of bugs that MISRA C rules are designed to prevent.</li>
+                            <li><strong>Memory Safety:</strong> Rules about pointer arithmetic and buffer overflows in MISRA C are designed to prevent programmers from accidentally accessing invalid memory. Rust's Ownership and Borrowing system makes this impossible at a language level. If your code compiles, it is free of these errors.</li>
+                        </ul>
+                        You are not skipping C/C++; you are skipping an entire generation of manual, error-prone safety checks and adopting a tool that provides stronger guarantees automatically. For ARINC 429, this means you can focus on the logic of decoding the 32-bit word, confident that the compiler has already prevented you from making memory mistakes during the process.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sub-2" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">2. Deep Dive: Variables and The Stack</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>When we declare a variable like `let x = 5;`, where does it actually live? For simple types like integers, it lives in a region of memory called <strong>The Stack</strong>. The Stack is incredibly fast and highly organized. Think of it as a stack of plates: the last one you put on is the first one you take off (LIFO - Last-In, First-Out).</p>
+                    <p>Every time a function is called, a new "frame" is pushed onto the stack to hold its local variables. When the function ends, its frame is popped off, and all its variables are destroyed. This is what "going out of scope" means.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Immutability in Memory</h3>
+                        <p class="mt-2">An immutable variable is like writing a value on the stack with permanent ink. The compiler forbids any operation that would try to change it.</p>
+                        <p class="mt-2">A mutable variable (`mut`) is like writing in pencil. The compiler allows operations that erase and rewrite the value at that specific memory location on the stack.</p>
+                        <div class="memory-diagram mt-4">
+                            <pre>
+<span class="mem-address">Stack Frame for main():</span>
+<span class="mem-address">0x7ffc...10:</span> <span class="mem-value">Cisco ASR 9000</span>  <-- let router_model (permanent ink)
+<span class="mem-address">0x7ffc...18:</span> <span class="mem-value">120</span>               <-- let mut packet_count (pencil)
+                            </pre>
+                        </div>
+                         <p class="mt-2">By defaulting to immutability, Rust forces you to use the "pencil" only when you are sure you need to erase something. This makes your program's flow of data far easier to reason about.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="sub-3" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">3. Deep Dive: Shadowing in Memory</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Shadowing is not a mutation. It's the creation of a brand new variable that happens to reuse a name. The old variable still exists, but it's now "shadowed" and inaccessible by that name for the rest of the scope.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Visualizing Shadowing on the Stack</h3>
+                        <div class="code-block"><pre><code class="language-rust">let spaces = 5;
+let spaces = spaces * 2;</code></pre></div>
+                        <p class="mt-2">Here’s what happens on the stack:</p>
+                        <div class="memory-diagram mt-4">
+                            <pre>
+<span class="mem-address">// After `let spaces = 5;`</span>
+<span class="mem-address">0x7ffc...20:</span> <span class="mem-value">5</span>                  <-- `spaces` name points here
+
+<span class="mem-address">// After `let spaces = spaces * 2;`</span>
+<span class="mem-address">0x7ffc...20:</span> <span class="mem-value">5</span>                  <-- (This memory still exists, but is now inaccessible by the name `spaces`)
+<span class="mem-address">0x7ffc...24:</span> <span class="mem-value">10</span>                 <-- `spaces` name now points to this NEW location
+                            </pre>
+                        </div>
+                        <p class="mt-2">We didn't erase the `5` and write `10` in its place. We allocated a new piece of memory, calculated the result, put `10` there, and pointed the name `spaces` to this new location. This is why shadowing lets you change the type: the new variable is completely separate from the old one.</p>
+                    </div>
+                </div>
+            </section>
+            
+             <section id="sub-4" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">4. Deep Dive: Data Types as a Memory Contract</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>In Python, an integer can grow as large as you want, consuming more memory as needed. In Rust, an integer type is a strict <strong>contract about its size in memory</strong>. This is non-negotiable and critical for systems programming.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">The Integer Contract</h3>
+                        <p class="mt-2">When you declare `let port: u16`, you are telling the compiler: "Reserve exactly 16 bits (2 bytes) of memory for this value. It will hold an unsigned number." The compiler can then generate highly efficient machine code because it never has to guess or check the size of `port`.</p>
+                        <div class="overflow-x-auto my-4">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100"><tr><th class="p-2">Type</th><th class="p-2">Size</th><th class="p-2">Range (Signed)</th><th class="p-2">Range (Unsigned)</th></tr></thead>
+                                <tbody>
+                                    <tr class="border-b"><td>i8 / u8</td><td>1 byte</td><td>-128 to 127</td><td>0 to 255</td></tr>
+                                    <tr class="border-b"><td>i16 / u16</td><td>2 bytes</td><td>-32,768 to 32,767</td><td>0 to 65,535</td></tr>
+                                    <tr class="border-b"><td>i32 / u32</td><td>4 bytes</td><td>-2.1B to 2.1B</td><td>0 to 4.2B</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h3 class="deep-dive-title mt-4">The `char` Contract</h3>
+                        <p class="mt-2">A Rust `char` is not a single byte like in C. It's a 4-byte Unicode Scalar Value. This means `let c = 'A'` and `let c = '😊'` both take up 4 bytes. This is a design choice for correctness: a `char` can represent any character from any language, which prevents a whole class of text encoding bugs. For raw byte manipulation, you would use the `u8` type.</p>
+                    </div>
+                </div>
+            </section>
+
+             <section id="sub-5" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">5. Deep Dive: Compound Types and Memory Layout</h2>
+                 <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>The key to understanding compound types like arrays and tuples in Rust is one word: <strong>contiguous</strong>. Their elements are laid out next to each other in memory. This is fundamentally different from a Python list, which is a collection of pointers to objects that could be scattered all over memory.</p>
+                     <div class="deep-dive">
+                        <h3 class="deep-dive-title">Array Memory Layout</h3>
+                        <p class="mt-2">Consider `let mac: [u8; 6] = [0, 1, 2, 3, 4, 5];`. In memory, it looks like this:</p>
+                        <div class="memory-diagram mt-4">
+                            <pre>
+<span class="mem-address">Stack:</span>
+<span class="mem-address">0x7ffc...30:</span> <span class="mem-value">0</span>  <-- mac[0]
+<span class="mem-address">0x7ffc...31:</span> <span class="mem-value">1</span>  <-- mac[1]
+<span class="mem-address">0x7ffc...32:</span> <span class="mem-value">2</span>  <-- mac[2]
+<span class="mem-address">0x7ffc...33:</span> <span class="mem-value">3</span>  <-- mac[3]
+<span class="mem-address">0x7ffc...34:</span> <span class="mem-value">4</span>  <-- mac[4]
+<span class="mem-address">0x7ffc...35:</span> <span class="mem-value">5</span>  <-- mac[5]
+                            </pre>
+                        </div>
+                        <p class="mt-2">This tight, predictable layout is called "data locality" and is a massive performance advantage. When the CPU needs to read the array, all the data is in one place, which is very cache-friendly. This is critical for performance in networking and embedded systems.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="sub-6" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">6. Deep Dive: Functions and the Call Stack</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                     <p>We mentioned the "Stack" before. The "Call Stack" is the official name. When you call a function, a new frame is pushed. When you call a function from *within* another function, a new frame is pushed on top of that one.</p>
+                    <div class="deep-dive">
+                        <h3 class="deep-dive-title">Visualizing the Call Stack</h3>
+                        <div class="code-block"><pre><code class="language-rust">fn main() {
+    let a = 5;
+    helper_function(a);
+}
+
+fn helper_function(x: i32) {
+    let b = x + 1;
+}</code></pre></div>
+                        <p class="mt-2">Here’s how the stack grows and shrinks:</p>
+                        <div class="memory-diagram mt-4">
+                            <pre>
+<span class="mem-address">1. `main` is called:</span>
+<span class="mem-address">[Stack Frame for main]</span>
+<span class="mem-address">  a: 5</span>
+
+<span class="mem-address">2. `main` calls `helper_function`:</span>
+<span class="mem-address">[Stack Frame for helper_function]</span>
+<span class="mem-address">  b: 6</span>
+<span class="mem-address">  x: 5</span>
+<span class="mem-address">[Stack Frame for main]</span>
+<span class="mem-address">  a: 5</span>
+
+<span class="mem-address">3. `helper_function` returns:</span>
+<span class="mem-address">[Stack Frame for main]</span>
+<span class="mem-address">  a: 5</span>
+                            </pre>
+                        </div>
+                        <p class="mt-2">The return value of a function is typically passed back to the caller through a special CPU register, which is extremely fast. The "no semicolon" return is just a clean syntax for telling the compiler to generate the machine code to place the final value in that register before the function's stack frame is popped.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sub-7" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">7. Deep Dive: Generating Professional Documentation</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>The `///` documentation comments are not just for humans. Cargo has a powerful tool to turn them into a professional, searchable HTML documentation website for your project.</p>
+                    <div class="exercise">
+                        <h4 class="font-bold text-lg text-yellow-900">Exercise: Document Your Decoder</h4>
+                        <ol class="list-decimal list-inside mt-3 space-y-2 text-yellow-800">
+                           <li>Go back to your `robust_arinc_decoder` project.</li>
+                           <li>Add documentation comments to the `ArincWord` struct and its methods. Use Markdown for formatting. For example:
+<div class="code-block"><pre><code class="language-rust">
+/// Represents a decoded 32-bit ARINC 429 word.
+///
+/// This struct holds all the fields of a standard ARINC word
+/// in a structured and easy-to-access format.
+#[derive(Debug)]
+struct ArincWord { //...
+</code></pre></div>
+                           </li>
+                           <li>In your terminal, run `cargo doc --open`.</li>
+                        </ol>
+                        <p class="mt-4 text-yellow-800">This command will build the documentation for your crate and all its dependencies, and then open it in your web browser. You've just created a professional-grade documentation site for your code with a single command.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sub-8" class="scroll-mt-20">
+                 <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">8. Deep Dive: Control Flow and the CPU</h2>
+                 <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>How does an `if` statement actually work at the machine level? The compiler translates it into a "conditional jump."</p>
+                    <div class="deep-dive">
+                         <h3 class="deep-dive-title">The `if` statement as a Jump</h3>
+                        <p class="mt-2">The CPU has a special register called the "instruction pointer" that tells it which line of machine code to execute next. A compiled `if` statement looks conceptually like this:</p>
+                        <ol class="list-decimal list-inside">
+                            <li><strong>Compare:</strong> Perform the comparison (e.g., `port == 443`).</li>
+                            <li><strong>Jump if False:</strong> If the comparison is false, tell the CPU to *jump* the instruction pointer to the code for the `else` block, skipping the `if` block entirely.</li>
+                            <li><strong>Execute `if` block:</strong> If the comparison was true, just continue executing the next instructions.</li>
+                            <li><strong>Unconditional Jump:</strong> At the end of the `if` block, add an unconditional jump to skip over the `else` block's code.</li>
+                        </ol>
+                        <p class="mt-2">Because Rust knows the type and size of everything, these comparisons are extremely fast. A `for` loop is similar: it's compiled into code that sets up a counter, checks it on each iteration, and jumps back to the start of the loop body until the counter is done.</p>
+                    </div>
+                </div>
+            </section>
+
+             <section id="sub-9" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">9. Deep Dive: Expressions and Functional DNA</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Rust's "everything is an expression" philosophy comes from its heritage in functional programming languages like ML and Haskell. This is more than just a convenience; it encourages a style of programming that avoids temporary mutable state.</p>
+                     <div class="deep-dive">
+                        <h3 class="deep-dive-title">The Imperative vs. The Expressive Style</h3>
+                        <p class="mt-2">Consider this C-style, statement-based code:</p>
+                        <div class="code-block"><pre><code class="language-rust">// Imperative style
+let mut status_message; // Must declare a mutable variable
+let temperature = 35.0;
+if temperature > 30.0 {
+    status_message = "CRITICAL";
+} else {
+    status_message = "NORMAL";
+}</code></pre></div>
+                        <p class="mt-2">And compare it to the Rust-idiomatic, expression-based style:</p>
+                        <div class="code-block"><pre><code class="language-rust">// Expressive style
+let temperature = 35.0;
+let status_message = if temperature > 30.0 {
+    "CRITICAL"
+} else {
+    "NORMAL"
+};</code></pre></div>
+                        <p class="mt-2">In the second example, `status_message` can be immutable. We bind it once to the result of the `if` expression. This reduces the number of "moving parts" in your code, making it easier to reason about and less prone to bugs where a mutable variable is changed unexpectedly.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="sub-10" class="scroll-mt-20">
+                <h2 class="text-3xl font-bold text-gray-700 border-b-2 border-gray-200 pb-3 mb-6">10. Chapter Project: Building a Robust ARINC 429 Decoder</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>Let's upgrade our previous decoder. Instead of just printing values, we'll create a `struct` to hold the decoded data. A `struct` is a custom data type, like a Python class without methods, that lets us group related data together. This is a much more professional way to handle structured data.</p>
+                    <div class="exercise">
+                        <h4 class="font-bold text-lg text-yellow-900">Your Task: The Struct-based Decoder</h4>
+                        <ol class="list-decimal list-inside mt-3 space-y-2 text-yellow-800">
+                            <li>Create a new binary crate: `cargo new robust_arinc_decoder`.</li>
+                            <li>Replace `src/main.rs` with the final code below.</li>
+                            <li>Run the project with `cargo run`.</li>
+                        </ol>
+                        <h4>Final Code: `src/main.rs`</h4>
+                        <div class="code-block"><pre><code class="language-rust">
+// `Debug` allows us to print the struct for debugging purposes.
+#[derive(Debug)]
+struct ArincWord {
+    label: u8,
+    sdi: u8,
+    data: u32,
+    ssm: u8,
+    parity: u8,
+}
+
+// We can implement methods for our struct.
+impl ArincWord {
+    /// A function that takes a raw u32 word and returns a structured ArincWord.
+    /// This is like a constructor.
+    fn from_u32(word: u32) -> Self {
+        Self {
+            label: (word & 0xFF) as u8,
+            sdi: ((word >> 8) & 0b11) as u8,
+            data: (word >> 10) & 0x7FFFF,
+            ssm: ((word >> 29) & 0b11) as u8,
+            parity: ((word >> 31) & 1) as u8,
+        }
+    }
+
+    /// A method that returns the meaning of the SSM field.
+    fn ssm_meaning(&self) -> &str {
+        match self.ssm {
+            0b11 => "Normal Operation",
+            0b01 => "Test",
+            _ => "Failure Warning",
+        }
+    }
+}
+
+fn main() {
+    let raw_word: u32 = 0b1_11_1010110011010101_01_10001000;
+    
+    // Create an instance of our structured data.
+    let decoded_word = ArincWord::from_u32(raw_word);
+
+    println!("--- Decoding ARINC Word ---");
+    println!("Raw Word (binary): {:032b}", raw_word);
+    
+    // Now we can access the data using descriptive names!
+    println!("\nDecoded Data:");
+    println!("  Label (octal): {:o}", decoded_word.label);
+    println!("  Data (hex):    0x{:X}", decoded_word.data);
+    println!("  SSM:           {} ({:b})", decoded_word.ssm_meaning(), decoded_word.ssm);
+    println!("  SDI:           {:b}", decoded_word.sdi);
+    println!("  Parity Bit:    {}", decoded_word.parity);
+
+    // We can also print the whole struct for debugging.
+    println!("\nDebug Print: {:?}", decoded_word);
+}
+</code></pre></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="next" class="scroll-mt-20 border-t pt-10">
+                <h2 class="text-3xl font-bold text-gray-700">Final Thoughts and Preamble to Chapter 3</h2>
+                <div class="prose max-w-none text-gray-700 space-y-4">
+                    <p>You have just completed a serious dive into the fundamentals of Rust. We've gone beyond the surface and explored how your code is physically represented in memory. You understand that Rust's type system isn't just about correctness—it's a contract about size and layout that enables incredible performance.</p>
+                    <p>But we've stayed in a safe, predictable place: The Stack. All our data has had a size known at compile time. This leads to the most important question in systems programming: What happens when you don't know the size of your data upfront? What if you need to read a network packet of an unknown size, or let a user enter text? For that, we need a different kind of memory.</p>
+                    <p><strong>In Chapter 3, "The Soul of the Machine: Ownership,"</strong> we will finally explore the Heap—the region of memory for dynamic data. We will learn the three rules of Ownership that govern this memory, allowing Rust to be both safe and fast without a garbage collector. This is the concept that makes Rust, Rust. It is challenging, but mastering it will fundamentally change the way you think about programming.</p>
+                </div>
+            </section>
+        </article>
+    </div></main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
+            document.querySelectorAll('.nav-link-mobile').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.add('hidden'); }); });
+            document.querySelectorAll('.code-block').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerText = 'Copy';
+                block.appendChild(button);
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('pre code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerText = 'Copied!';
+                        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+                    });
+                });
+            });
+            const sections = document.querySelectorAll('main section[id]');
+            const navLinks = document.querySelectorAll('#desktop-nav a.nav-link');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) { link.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { rootMargin: "-20% 0px -80% 0px" });
+            sections.forEach(section => { observer.observe(section); });
+        });
+    </script>
+</body>
+</html>
